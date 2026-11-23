@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Code</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #qr-container {
+    display: inline-block;
+  }
+
+  /* Entrance animations */
+  @keyframes qr-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes qr-pulse {
+    0% { transform: scale(0.85); opacity: 0; }
+    60% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes qr-bounce {
+    0% { transform: translateY(40px); opacity: 0; }
+    50% { transform: translateY(-10px); opacity: 1; }
+    70% { transform: translateY(5px); }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  .anim-fade   { animation: qr-fade 0.6s ease-out both; }
+  .anim-pulse  { animation: qr-pulse 0.5s ease-out both; }
+  .anim-bounce { animation: qr-bounce 0.6s ease-out both; }
+</style>
+</head>
+<body>
+
+<div id="qr-container"></div>
+
+<script src="https://unpkg.com/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"></script>
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+
+  // --- Helpers ---
+  function hex8ToRgba(hex8) {
+    const h = hex8.replace(/^#/, '').padEnd(8, 'F');
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    const a = parseInt(h.substring(6, 8), 16) / 255;
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a.toFixed(3) + ')';
+  }
+
+  // --- Data ---
+  const data    = params.get('data') || '';
+  const dataUrl = params.get('dataUrl') || '';
+  const mode    = params.get('mode') || '';  // 'live' = listen for wizard pushes
+  const refresh = parseInt(params.get('refresh'), 10) || 0;
+
+  const isLive = (mode === 'live');
+
+  if (!data && !dataUrl && !isLive) {
+    document.getElementById('qr-container').textContent = 'No data, dataUrl, or mode=live parameter provided.';
+    return;
+  }
+
+  // --- Colors (8-digit RRGGBBAA hex) ---
+  const fg = hex8ToRgba(params.get('fg') || '000000FF');
+  const bgRaw = params.get('bg');
+  const bg = (!bgRaw || bgRaw === 'transparent') ? 'rgba(0,0,0,0)' : hex8ToRgba(bgRaw);
+  const cornerFgRaw = params.get('cornerFg');
+  const cornerFg = cornerFgRaw ? hex8ToRgba(cornerFgRaw) : fg;
+
+  // --- Dimensions ---
+  const size   = parseInt(params.get('size'), 10) || 300;
+  const margin = parseInt(params.get('margin'), 10) || 0;
+
+  // --- Logo ---
+  const logo = params.get('logo') || '';
+  const ecl  = params.get('ecl') || (logo ? 'H' : 'M');
+
+  // --- Styles ---
+  const dotStyle          = params.get('dotStyle') || 'square';
+  const cornerSquareStyle = params.get('cornerSquareStyle') || 'square';
+  const cornerDotStyle    = params.get('cornerDotStyle') || 'square';
+
+  // --- Border & Shadow ---
+  const borderW     = parseInt(params.get('borderW'), 10) || 0;
+  const borderColor = params.get('borderColor') ? hex8ToRgba(params.get('borderColor')) : fg;
+  const borderR     = parseInt(params.get('borderR'), 10) || 0;
+  const shadowSize  = parseInt(params.get('shadowSize'), 10) || 0;
+  const shadowColor = params.get('shadowColor') ? hex8ToRgba(params.get('shadowColor')) : 'rgba(0,0,0,0.4)';
+
+  // --- Animation ---
+  const anim = params.get('anim') || '';
+
+  // --- Custom CSS ---
+  const customCss = params.get('css') || '';
+
+  // --- Apply container styles ---
+  const container = document.getElementById('qr-container');
+  if (borderW) container.style.border = borderW + 'px solid ' + borderColor;
+  if (borderR) container.style.borderRadius = borderR + 'px';
+  if (shadowSize) container.style.boxShadow = '0 0 ' + shadowSize + 'px ' + shadowColor;
+  if (borderR) container.style.overflow = 'hidden';
+  if (anim && anim !== 'none') container.classList.add('anim-' + anim);
+  if (customCss) container.style.cssText += ';' + customCss;
+
+  // --- Build & render QR ---
+  function renderQR(qrData) {
+    const options = {
+      width: size,
+      height: size,
+      margin: margin,
+      data: qrData,
+      dotsOptions:          { color: fg, type: dotStyle },
+      backgroundOptions:    { color: bg },
+      cornersSquareOptions: { color: cornerFg, type: cornerSquareStyle },
+      cornersDotOptions:    { color: cornerFg, type: cornerDotStyle },
+      qrOptions:            { errorCorrectionLevel: ecl }
+    };
+
+    if (logo) {
+      options.image = logo;
+      options.imageOptions = { crossOrigin: 'anonymous', margin: 4, imageSize: 0.3 };
+      options.qrOptions.errorCorrectionLevel = 'H';
+    }
+
+    container.innerHTML = '';
+    const qrCode = new QRCodeStyling(options);
+    qrCode.append(container);
+  }
+
+  // --- Dynamic mode: fetch content from dataUrl ---
+  function fetchAndRender() {
+    fetch(dataUrl, { cache: 'no-store' })
+      .then(function(r) { return r.text(); })
+      .then(function(text) { renderQR(text.trim()); })
+      .catch(function(e) { console.error('dataUrl fetch failed:', e); });
+  }
+
+  // --- Live mode: poll qr-live.json written by the wizard ---
+  if (isLive) {
+    var lastData = '';
+    var liveFile = params.get('liveFile') || 'qr-live.json';
+
+    function pollLiveFile() {
+      fetch(liveFile, { cache: 'no-store' })
+        .then(function(r) { return r.json(); })
+        .then(function(obj) {
+          var qrData = obj && obj.data ? obj.data : '';
+          if (qrData && qrData !== lastData) {
+            lastData = qrData;
+            renderQR(qrData);
+          }
+        })
+        .catch(function() {}); // file may not exist yet
+    }
+
+    // Poll every 1 second
+    pollLiveFile();
+    setInterval(pollLiveFile, 1000);
+
+    // Render static data as fallback until first successful poll
+    if (data) renderQR(data);
+  }
+
+  // --- Dynamic URL mode ---
+  else if (dataUrl) {
+    fetchAndRender();
+    if (refresh > 0) setInterval(fetchAndRender, refresh * 1000);
+  }
+
+  // --- Static mode ---
+  else {
+    renderQR(data);
+    if (refresh > 0) setInterval(function() { window.location.reload(); }, refresh * 1000);
+  }
+})();
+</script>
+
+</body>
+</html>

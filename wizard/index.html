@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Code Wizard</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --accent: #e94560;
+    --text: #eee;
+    --text-muted: #999;
+    --radius: 8px;
+    --input-bg: #111;
+  }
+  :root.light {
+    --bg: #f0f0f5;
+    --surface: #fff;
+    --surface2: #d0d0dd;
+    --accent: #d6336c;
+    --text: #222;
+    --text-muted: #666;
+    --input-bg: #fff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 1.2rem 2rem 2rem;
+    transition: background 0.25s, color 0.25s;
+  }
+
+  /* --- Header --- */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto 1rem;
+  }
+  .header h1 { font-size: 1.5rem; }
+  .header-actions { display: flex; gap: 0.5rem; align-items: center; }
+  .icon-btn {
+    background: var(--surface);
+    border: 1px solid var(--surface2);
+    color: var(--text);
+    border-radius: var(--radius);
+    padding: 0.4rem 0.65rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: border-color 0.15s;
+  }
+  .icon-btn:hover { border-color: var(--accent); }
+
+  /* --- Preset bar --- */
+  .preset-bar {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto 1rem;
+    flex-wrap: wrap;
+  }
+  .preset-bar select {
+    flex: 1;
+    min-width: 150px;
+    max-width: 300px;
+  }
+  .preset-bar button {
+    padding: 0.4rem 0.7rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--surface2);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: border-color 0.15s;
+  }
+  .preset-bar button:hover { border-color: var(--accent); }
+  .preset-bar .save-btn { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* --- Layout --- */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .panel {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+  }
+
+  /* --- Tabs --- */
+  .tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1.2rem; }
+  .tab-btn {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--surface2);
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.82rem;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* --- Form controls --- */
+  label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+    margin-top: 0.85rem;
+  }
+  label:first-child { margin-top: 0; }
+
+  input[type="text"], input[type="url"], input[type="number"],
+  input[type="email"], input[type="tel"], input[type="datetime-local"],
+  textarea, select {
+    width: 100%;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--surface2);
+    border-radius: var(--radius);
+    background: var(--input-bg);
+    color: var(--text);
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 55px; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.8rem; }
+
+  /* --- Color field: picker + hex + opacity --- */
+  .color-field { display: flex; align-items: center; gap: 0.4rem; }
+  .color-field input[type="color"] {
+    width: 34px; height: 34px; border: none; border-radius: 4px;
+    cursor: pointer; padding: 0; background: none;
+  }
+  .color-field input[type="text"] { flex: 1; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.82rem; }
+  .opacity-row {
+    display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;
+  }
+  .opacity-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+  .opacity-row span { font-size: 0.78rem; min-width: 2.5em; text-align: right; color: var(--text-muted); }
+
+  .checkbox-row {
+    display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;
+  }
+  .checkbox-row input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent); }
+  .checkbox-row label { margin: 0; font-size: 0.82rem; color: var(--text); }
+
+  /* --- Section headers --- */
+  h3 {
+    font-size: 0.92rem;
+    margin-top: 1.3rem;
+    margin-bottom: 0.3rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--surface2);
+  }
+  h3:first-child { margin-top: 0; }
+
+  /* --- Preview --- */
+  .preview-area {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 300px;
+    background: repeating-conic-gradient(#2a2a2a 0% 25%, #333 0% 50%) 50% / 16px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+  :root.light .preview-area {
+    background: repeating-conic-gradient(#ddd 0% 25%, #eee 0% 50%) 50% / 16px 16px;
+  }
+
+  /* --- Buttons --- */
+  .action-btn {
+    padding: 0.35rem 0.7rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .action-btn:hover { opacity: 0.85; }
+  .action-btn.copied { background: #2ecc71; }
+
+  .download-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+  .download-btn { flex: 1; padding: 0.55rem 1rem; font-size: 0.88rem; border-radius: var(--radius); }
+  .download-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .url-output { position: relative; }
+  .url-output textarea {
+    width: 100%; min-height: 70px;
+    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.76rem;
+    word-break: break-all;
+  }
+  .copy-btn { position: absolute; top: 5px; right: 5px; }
+
+  .hint { font-size: 0.73rem; color: var(--text-muted); margin-top: 0.35rem; }
+  code { background: var(--surface2); padding: 0.1em 0.35em; border-radius: 3px; font-size: 0.82em; }
+
+  /* --- Collapsible sections --- */
+  details { margin-top: 1rem; }
+  details summary {
+    font-size: 0.92rem; font-weight: 600; cursor: pointer;
+    padding-bottom: 0.3rem; border-bottom: 1px solid var(--surface2);
+    list-style: none;
+  }
+  details summary::before { content: '▸ '; }
+  details[open] summary::before { content: '▾ '; }
+
+  @media (max-width: 768px) { .layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>🔳 QR Code Wizard</h1>
+  <div class="header-actions">
+    <button class="icon-btn" id="theme-toggle" title="Toggle light/dark theme">🌓</button>
+    <button class="icon-btn" id="share-btn" title="Copy shareable wizard link">🔗</button>
+  </div>
+</div>
+
+<!-- Presets -->
+<div class="preset-bar">
+  <select id="preset-select">
+    <option value="">— Presets —</option>
+  </select>
+  <button class="save-btn" id="preset-save">Save</button>
+  <button id="preset-delete">Delete</button>
+</div>
+
+<div class="layout">
+  <!-- ==================== LEFT: Controls ==================== -->
+  <div class="panel" id="controls">
+
+    <!-- Content type tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-url">URL</button>
+      <button class="tab-btn" data-tab="tab-text">Text</button>
+      <button class="tab-btn" data-tab="tab-wifi">WiFi</button>
+      <button class="tab-btn" data-tab="tab-email">Email</button>
+      <button class="tab-btn" data-tab="tab-phone">Phone</button>
+      <button class="tab-btn" data-tab="tab-sms">SMS</button>
+      <button class="tab-btn" data-tab="tab-vcard">vCard</button>
+      <button class="tab-btn" data-tab="tab-event">Event</button>
+      <button class="tab-btn" data-tab="tab-geo">Geo</button>
+    </div>
+
+    <!-- URL -->
+    <div class="tab-content active" id="tab-url">
+      <label for="input-url">URL</label>
+      <input type="url" id="input-url" placeholder="https://example.com" value="https://example.com">
+    </div>
+    <!-- Text -->
+    <div class="tab-content" id="tab-text">
+      <label for="input-text">Plain Text</label>
+      <textarea id="input-text" placeholder="Enter any text..."></textarea>
+    </div>
+    <!-- WiFi -->
+    <div class="tab-content" id="tab-wifi">
+      <label for="wifi-ssid">Network Name (SSID)</label>
+      <input type="text" id="wifi-ssid" placeholder="MyNetwork">
+      <label for="wifi-password">Password</label>
+      <input type="text" id="wifi-password" placeholder="password123">
+      <label for="wifi-encryption">Encryption</label>
+      <select id="wifi-encryption">
+        <option value="WPA">WPA/WPA2</option>
+        <option value="WEP">WEP</option>
+        <option value="nopass">None</option>
+      </select>
+      <div class="checkbox-row">
+        <input type="checkbox" id="wifi-hidden">
+        <label for="wifi-hidden">Hidden Network</label>
+      </div>
+    </div>
+    <!-- Email -->
+    <div class="tab-content" id="tab-email">
+      <label for="email-address">Email Address</label>
+      <input type="email" id="email-address" placeholder="hello@example.com">
+      <label for="email-subject">Subject (optional)</label>
+      <input type="text" id="email-subject" placeholder="Hello!">
+      <label for="email-body">Body (optional)</label>
+      <textarea id="email-body" placeholder="Message body..."></textarea>
+    </div>
+    <!-- Phone -->
+    <div class="tab-content" id="tab-phone">
+      <label for="phone-number">Phone Number</label>
+      <input type="tel" id="phone-number" placeholder="+1234567890">
+    </div>
+    <!-- SMS -->
+    <div class="tab-content" id="tab-sms">
+      <label for="sms-number">Phone Number</label>
+      <input type="tel" id="sms-number" placeholder="+1234567890">
+      <label for="sms-body">Message (optional)</label>
+      <textarea id="sms-body" placeholder="Your message..."></textarea>
+    </div>
+    <!-- vCard -->
+    <div class="tab-content" id="tab-vcard">
+      <div class="row">
+        <div><label for="vcard-first">First Name</label><input type="text" id="vcard-first" placeholder="Jane"></div>
+        <div><label for="vcard-last">Last Name</label><input type="text" id="vcard-last" placeholder="Doe"></div>
+      </div>
+      <label for="vcard-org">Organization</label><input type="text" id="vcard-org" placeholder="Acme Inc.">
+      <label for="vcard-title">Title</label><input type="text" id="vcard-title" placeholder="Software Engineer">
+      <label for="vcard-phone">Phone</label><input type="tel" id="vcard-phone" placeholder="+1234567890">
+      <label for="vcard-email">Email</label><input type="email" id="vcard-email" placeholder="jane@example.com">
+      <label for="vcard-url">Website</label><input type="url" id="vcard-url" placeholder="https://example.com">
+      <label for="vcard-address">Address</label><textarea id="vcard-address" placeholder="123 Main St, City, State 12345"></textarea>
+    </div>
+    <!-- Event -->
+    <div class="tab-content" id="tab-event">
+      <label for="event-title">Event Title</label><input type="text" id="event-title" placeholder="Team Meeting">
+      <label for="event-location">Location</label><input type="text" id="event-location" placeholder="Conference Room A">
+      <label for="event-description">Description</label><textarea id="event-description" placeholder="Quarterly review..."></textarea>
+      <div class="row">
+        <div><label for="event-start">Start</label><input type="datetime-local" id="event-start"></div>
+        <div><label for="event-end">End</label><input type="datetime-local" id="event-end"></div>
+      </div>
+    </div>
+    <!-- Geo -->
+    <div class="tab-content" id="tab-geo">
+      <div class="row">
+        <div><label for="geo-lat">Latitude</label><input type="number" id="geo-lat" placeholder="40.7128" step="any" min="-90" max="90"></div>
+        <div><label for="geo-lng">Longitude</label><input type="number" id="geo-lng" placeholder="-74.0060" step="any" min="-180" max="180"></div>
+      </div>
+      <label for="geo-query">Place Name (optional)</label>
+      <input type="text" id="geo-query" placeholder="New York City">
+      <p class="hint">Opens in the device's default maps app.</p>
+    </div>
+
+    <!-- ===== Colors ===== -->
+    <h3>Colors</h3>
+    <div class="row">
+      <div>
+        <label>Foreground</label>
+        <div class="color-field">
+          <input type="color" id="fg-picker" value="#000000">
+          <input type="text" id="fg-hex" value="000000FF" maxlength="8">
+        </div>
+        <div class="opacity-row">
+          <input type="range" id="fg-opacity" min="0" max="255" value="255">
+          <span id="fg-opacity-val">FF</span>
+        </div>
+      </div>
+      <div>
+        <label>Background</label>
+        <div class="color-field">
+          <input type="color" id="bg-picker" value="#ffffff">
+          <input type="text" id="bg-hex" value="00000000" maxlength="8">
+        </div>
+        <div class="opacity-row">
+          <input type="range" id="bg-opacity" min="0" max="255" value="0">
+          <span id="bg-opacity-val">00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="corner-color-enable">
+      <label for="corner-color-enable">Custom corner color</label>
+    </div>
+    <div id="corner-color-section" style="display:none">
+      <label>Corner Color</label>
+      <div class="color-field">
+        <input type="color" id="corner-picker" value="#000000">
+        <input type="text" id="corner-hex" value="000000FF" maxlength="8">
+      </div>
+      <div class="opacity-row">
+        <input type="range" id="corner-opacity" min="0" max="255" value="255">
+        <span id="corner-opacity-val">FF</span>
+      </div>
+    </div>
+
+    <!-- ===== Size ===== -->
+    <h3>Size</h3>
+    <div class="row">
+      <div><label for="qr-size">Size (px)</label><input type="number" id="qr-size" value="300" min="100" max="2000" step="10"></div>
+      <div><label for="qr-margin">Margin (px)</label><input type="number" id="qr-margin" value="0" min="0" max="100"></div>
+    </div>
+
+    <!-- ===== Dot / Corner Styles ===== -->
+    <h3>Dot &amp; Corner Styles</h3>
+    <div class="row-3">
+      <div>
+        <label for="dot-style">Dot Style</label>
+        <select id="dot-style">
+          <option value="square">Square</option>
+          <option value="dots">Dots</option>
+          <option value="rounded">Rounded</option>
+          <option value="extra-rounded">Extra Rounded</option>
+          <option value="classy">Classy</option>
+          <option value="classy-rounded">Classy Rounded</option>
+        </select>
+      </div>
+      <div>
+        <label for="corner-square-style">Corner Square</label>
+        <select id="corner-square-style">
+          <option value="square">Square</option>
+          <option value="dot">Dot</option>
+          <option value="extra-rounded">Extra Rounded</option>
+        </select>
+      </div>
+      <div>
+        <label for="corner-dot-style">Corner Dot</label>
+        <select id="corner-dot-style">
+          <option value="square">Square</option>
+          <option value="dot">Dot</option>
+        </select>
+      </div>
+    </div>
+
+    <label for="ecl">Error Correction</label>
+    <select id="ecl">
+      <option value="L">Low (L) — 7%</option>
+      <option value="M" selected>Medium (M) — 15%</option>
+      <option value="Q">Quartile (Q) — 25%</option>
+      <option value="H">High (H) — 30%</option>
+    </select>
+
+    <!-- ===== Logo ===== -->
+    <h3>Logo Overlay</h3>
+    <label for="logo-url">Logo Image URL</label>
+    <input type="url" id="logo-url" placeholder="https://example.com/logo.png">
+    <label for="logo-file">Or choose a local file</label>
+    <input type="file" id="logo-file" accept="image/*" style="font-size:0.82rem;margin-top:0.2rem;">
+    <p class="hint">Logo forces error correction to High. Remote URLs may fail locally (CORS) — use a local file or <code>python3 -m http.server</code>.</p>
+
+    <!-- ===== Extras (collapsible) ===== -->
+    <details>
+      <summary>Extras</summary>
+
+      <label for="anim-select">Entrance Animation</label>
+      <select id="anim-select">
+        <option value="">None</option>
+        <option value="fade">Fade In</option>
+        <option value="pulse">Pulse</option>
+        <option value="bounce">Bounce</option>
+      </select>
+
+      <label for="refresh-interval">Auto-Refresh (seconds, 0 = off)</label>
+      <input type="number" id="refresh-interval" value="0" min="0" max="3600">
+
+      <label for="data-url">Dynamic Data URL (fetches content from remote endpoint)</label>
+      <input type="url" id="data-url" placeholder="https://myapi.com/current-qr-content">
+      <p class="hint">If set, the viewer fetches this URL and encodes the response as QR data. Pair with auto-refresh above.</p>
+
+      <h3 style="margin-top:1rem">Border</h3>
+      <div class="row-3">
+        <div><label for="border-w">Width (px)</label><input type="number" id="border-w" value="0" min="0" max="50"></div>
+        <div><label for="border-r">Radius (px)</label><input type="number" id="border-r" value="0" min="0" max="200"></div>
+        <div>
+          <label>Color</label>
+          <div class="color-field">
+            <input type="color" id="border-picker" value="#000000">
+            <input type="text" id="border-hex" value="000000FF" maxlength="8">
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:1rem">Shadow</h3>
+      <div class="row">
+        <div><label for="shadow-size">Blur (px)</label><input type="number" id="shadow-size" value="0" min="0" max="100"></div>
+        <div>
+          <label>Color</label>
+          <div class="color-field">
+            <input type="color" id="shadow-picker" value="#000000">
+            <input type="text" id="shadow-hex" value="00000066" maxlength="8">
+          </div>
+        </div>
+      </div>
+
+      <label for="custom-css">Custom CSS (applied to container)</label>
+      <textarea id="custom-css" placeholder="e.g. transform: rotate(5deg);" style="font-family:'SF Mono','Fira Code',monospace;font-size:0.78rem;"></textarea>
+    </details>
+
+  </div>
+
+  <!-- ==================== RIGHT: Preview + URL ==================== -->
+  <div class="panel">
+    <h3>Preview</h3>
+    <div class="preview-area" id="preview-area"></div>
+
+    <div class="download-row">
+      <button class="action-btn download-btn" id="download-png" disabled>💾 PNG</button>
+      <button class="action-btn download-btn" id="download-svg" disabled>💾 SVG</button>
+    </div>
+
+    <h3>QR Viewer URL</h3>
+    <div class="url-output">
+      <textarea id="output-url" readonly></textarea>
+      <button class="action-btn copy-btn" id="copy-btn">Copy</button>
+    </div>
+    <p class="hint">Open or embed this URL to display the styled QR code.</p>
+  </div>
+</div>
+
+<script src="https://unpkg.com/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"></script>
+<script>
+(function () {
+  // ==============================
+  // Helpers
+  // ==============================
+  function hex8ToRgba(h) {
+    h = h.replace(/^#/, '').padEnd(8, 'F');
+    var r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16);
+    var b = parseInt(h.substring(4,6),16), a = parseInt(h.substring(6,8),16)/255;
+    return 'rgba('+r+','+g+','+b+','+a.toFixed(3)+')';
+  }
+  function alphaToHex(v) { return Math.round(v).toString(16).toUpperCase().padStart(2,'0'); }
+  function toVCalDate(dt) { return dt ? dt.replace(/[-:]/g,'') + '00' : ''; }
+
+  // Color field wiring: (picker, hexInput, opacitySlider, opacityLabel)
+  function wireColor(picker, hexEl, slider, label) {
+    function syncFromHex() {
+      var v = hexEl.value.replace(/[^0-9a-fA-F]/g,'').slice(0,8).toUpperCase();
+      hexEl.value = v;
+      if (v.length >= 6) picker.value = '#' + v.substring(0,6);
+      if (v.length === 8 && slider) { slider.value = parseInt(v.substring(6,8),16); label.textContent = v.substring(6,8); }
+    }
+    function syncToHex() {
+      var rgb = picker.value.slice(1).toUpperCase();
+      var aa = slider ? alphaToHex(slider.value) : 'FF';
+      hexEl.value = rgb + aa;
+      if (label) label.textContent = aa;
+    }
+    picker.addEventListener('input', function(){ syncToHex(); scheduleUpdate(); });
+    hexEl.addEventListener('input', function(){ syncFromHex(); scheduleUpdate(); });
+    if (slider) {
+      slider.addEventListener('input', function(){
+        var rgb = hexEl.value.replace(/[^0-9a-fA-F]/g,'').substring(0,6);
+        var aa = alphaToHex(slider.value);
+        hexEl.value = rgb + aa;
+        label.textContent = aa;
+        scheduleUpdate();
+      });
+    }
+  }
+
+  // ==============================
+  // Element refs
+  // ==============================
+  var $ = function(id){ return document.getElementById(id); };
+
+  var previewArea  = $('preview-area'),  outputUrl = $('output-url');
+  var copyBtn      = $('copy-btn'),      downloadPng = $('download-png'), downloadSvg = $('download-svg');
+  var tabBtns      = document.querySelectorAll('.tab-btn');
+  var tabContents  = document.querySelectorAll('.tab-content');
+
+  var fgPicker = $('fg-picker'),   fgHex = $('fg-hex'),     fgOpacity = $('fg-opacity'),     fgOpacityVal = $('fg-opacity-val');
+  var bgPicker = $('bg-picker'),   bgHex = $('bg-hex'),     bgOpacity = $('bg-opacity'),     bgOpacityVal = $('bg-opacity-val');
+  var cornerEnable  = $('corner-color-enable'), cornerSection = $('corner-color-section');
+  var cornerPicker  = $('corner-picker'), cornerHex = $('corner-hex'), cornerOpacity = $('corner-opacity'), cornerOpacityVal = $('corner-opacity-val');
+  var qrSize = $('qr-size'), qrMargin = $('qr-margin');
+  var dotStyle = $('dot-style'), cornerSquare = $('corner-square-style'), cornerDot = $('corner-dot-style');
+  var ecl = $('ecl'), logoUrl = $('logo-url'), logoFile = $('logo-file');
+  var animSelect = $('anim-select'), refreshInterval = $('refresh-interval'), dataUrlInput = $('data-url');
+  var borderW = $('border-w'), borderR = $('border-r'), borderPicker = $('border-picker'), borderHex = $('border-hex');
+  var shadowSize = $('shadow-size'), shadowPicker = $('shadow-picker'), shadowHex = $('shadow-hex');
+  var customCss = $('custom-css');
+
+  var currentTab = 'tab-url';
+  var qrCode = null;
+  var debounceTimer = null;
+  var localLogoDataUrl = null;
+
+  // ==============================
+  // Wire color fields
+  // ==============================
+  wireColor(fgPicker, fgHex, fgOpacity, fgOpacityVal);
+  wireColor(bgPicker, bgHex, bgOpacity, bgOpacityVal);
+  wireColor(cornerPicker, cornerHex, cornerOpacity, cornerOpacityVal);
+  wireColor(borderPicker, borderHex, null, null);
+  wireColor(shadowPicker, shadowHex, null, null);
+
+  // Corner color toggle
+  cornerEnable.addEventListener('change', function(){
+    cornerSection.style.display = cornerEnable.checked ? 'block' : 'none';
+    scheduleUpdate();
+  });
+
+  // ==============================
+  // Tabs
+  // ==============================
+  tabBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      tabBtns.forEach(function(b){ b.classList.remove('active'); });
+      tabContents.forEach(function(c){ c.classList.remove('active'); });
+      btn.classList.add('active');
+      currentTab = btn.dataset.tab;
+      $(currentTab).classList.add('active');
+      scheduleUpdate();
+    });
+  });
+
+  // ==============================
+  // Logo
+  // ==============================
+  logoFile.addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if (file) {
+      var reader = new FileReader();
+      reader.onload = function(ev){ localLogoDataUrl = ev.target.result; logoUrl.value = ''; scheduleUpdate(); };
+      reader.readAsDataURL(file);
+    } else { localLogoDataUrl = null; scheduleUpdate(); }
+  });
+  logoUrl.addEventListener('input', function(){
+    if (logoUrl.value.trim()) { localLogoDataUrl = null; logoFile.value = ''; }
+    scheduleUpdate();
+  });
+  function getPreviewLogo() { return localLogoDataUrl || logoUrl.value.trim(); }
+
+  // ==============================
+  // Data builders
+  // ==============================
+  function getData() {
+    switch (currentTab) {
+      case 'tab-url': return $('input-url').value.trim();
+      case 'tab-text': return $('input-text').value;
+      case 'tab-wifi': {
+        var s=$('wifi-ssid').value, p=$('wifi-password').value, e=$('wifi-encryption').value;
+        var h=$('wifi-hidden').checked?'H:true;':'';
+        return 'WIFI:T:'+e+';S:'+s+';P:'+p+';'+h+';';
+      }
+      case 'tab-email': {
+        var a=$('email-address').value, s=$('email-subject').value, b=$('email-body').value;
+        var m='mailto:'+a, pp=[];
+        if(s) pp.push('subject='+encodeURIComponent(s));
+        if(b) pp.push('body='+encodeURIComponent(b));
+        return pp.length ? m+'?'+pp.join('&') : m;
+      }
+      case 'tab-phone': return 'tel:'+$('phone-number').value.trim();
+      case 'tab-sms': {
+        var n=$('sms-number').value.trim(), b=$('sms-body').value;
+        return b ? 'sms:'+n+'?body='+encodeURIComponent(b) : 'sms:'+n;
+      }
+      case 'tab-vcard': {
+        var f=$('vcard-first').value.trim(), l=$('vcard-last').value.trim();
+        if(!f&&!l) return '';
+        var v='BEGIN:VCARD\nVERSION:3.0\nN:'+l+';'+f+';;;\nFN:'+f+' '+l+'\n';
+        var o=$('vcard-org').value.trim(); if(o) v+='ORG:'+o+'\n';
+        var t=$('vcard-title').value.trim(); if(t) v+='TITLE:'+t+'\n';
+        var p=$('vcard-phone').value.trim(); if(p) v+='TEL:'+p+'\n';
+        var e=$('vcard-email').value.trim(); if(e) v+='EMAIL:'+e+'\n';
+        var u=$('vcard-url').value.trim(); if(u) v+='URL:'+u+'\n';
+        var a=$('vcard-address').value.trim(); if(a) v+='ADR:;;'+a+';;;;\n';
+        return v+'END:VCARD';
+      }
+      case 'tab-event': {
+        var t=$('event-title').value.trim(); if(!t) return '';
+        var ev='BEGIN:VEVENT\nSUMMARY:'+t+'\n';
+        var loc=$('event-location').value.trim(); if(loc) ev+='LOCATION:'+loc+'\n';
+        var d=$('event-description').value.trim(); if(d) ev+='DESCRIPTION:'+d+'\n';
+        var s=$('event-start').value; if(s) ev+='DTSTART:'+toVCalDate(s)+'\n';
+        var e=$('event-end').value; if(e) ev+='DTEND:'+toVCalDate(e)+'\n';
+        return ev+'END:VEVENT';
+      }
+      case 'tab-geo': {
+        var lat=$('geo-lat').value, lng=$('geo-lng').value;
+        if(!lat||!lng) return '';
+        var q=$('geo-query').value.trim();
+        return q ? 'geo:'+lat+','+lng+'?q='+encodeURIComponent(q) : 'geo:'+lat+','+lng;
+      }
+      default: return '';
+    }
+  }
+
+  // ==============================
+  // Build Viewer URL
+  // ==============================
+  function buildUrl() {
+    var data = getData();
+    var dynUrl = dataUrlInput.value.trim();
+    if (!data && !dynUrl) return '';
+    var base = window.location.href.replace(/[#?].*$/,'').replace(/\/wizard\/.*$/,'/index.html');
+    var p = new URLSearchParams();
+
+    if (dynUrl) { p.set('dataUrl', dynUrl); }
+    if (data) { p.set('data', data); }
+
+    var fg = fgHex.value.trim().toUpperCase();
+    if (fg !== '000000FF') p.set('fg', fg);
+
+    var bg = bgHex.value.trim().toUpperCase();
+    if (bg !== '00000000') p.set('bg', bg);
+
+    if (cornerEnable.checked) {
+      var cf = cornerHex.value.trim().toUpperCase();
+      p.set('cornerFg', cf);
+    }
+
+    var sz = parseInt(qrSize.value,10); if(sz && sz!==300) p.set('size',sz);
+    var mg = parseInt(qrMargin.value,10); if(mg) p.set('margin',mg);
+    var ds = dotStyle.value; if(ds!=='square') p.set('dotStyle',ds);
+    var cs = cornerSquare.value; if(cs!=='square') p.set('cornerSquareStyle',cs);
+    var cd = cornerDot.value; if(cd!=='square') p.set('cornerDotStyle',cd);
+
+    var logo = logoUrl.value.trim();
+    var eclVal = ecl.value;
+    if(logo) { p.set('logo',logo); }
+    else if(eclVal!=='M') { p.set('ecl',eclVal); }
+
+    var an = animSelect.value; if(an) p.set('anim',an);
+    var ri = parseInt(refreshInterval.value,10); if(ri>0) p.set('refresh',ri);
+
+    var bw = parseInt(borderW.value,10); if(bw>0) p.set('borderW',bw);
+    var br = parseInt(borderR.value,10); if(br>0) p.set('borderR',br);
+    var bh = borderHex.value.trim().toUpperCase(); if(bw>0 && bh!=='000000FF') p.set('borderColor',bh);
+
+    var ss = parseInt(shadowSize.value,10); if(ss>0) p.set('shadowSize',ss);
+    var sh = shadowHex.value.trim().toUpperCase(); if(ss>0 && sh!=='00000066') p.set('shadowColor',sh);
+
+    var cc = customCss.value.trim(); if(cc) p.set('css',cc);
+
+    return base + '?' + p.toString();
+  }
+
+  // ==============================
+  // QR options builder
+  // ==============================
+  function buildQROptions(previewSize) {
+    var data = getData();
+    if (!data) return null;
+    var fg = hex8ToRgba(fgHex.value);
+    var bg = hex8ToRgba(bgHex.value);
+    var logo = getPreviewLogo();
+    var cf = cornerEnable.checked ? hex8ToRgba(cornerHex.value) : fg;
+    var eclVal = logo ? 'H' : ecl.value;
+    var isLocal = logo && (logo.startsWith('data:') || logo.startsWith('file:'));
+
+    var opts = {
+      width: previewSize, height: previewSize,
+      margin: parseInt(qrMargin.value,10)||0,
+      data: data,
+      dotsOptions:          { color: fg, type: dotStyle.value },
+      backgroundOptions:    { color: bg },
+      cornersSquareOptions: { color: cf, type: cornerSquare.value },
+      cornersDotOptions:    { color: cf, type: cornerDot.value },
+      qrOptions:            { errorCorrectionLevel: eclVal }
+    };
+    if (logo) {
+      opts.image = logo;
+      opts.imageOptions = { crossOrigin: isLocal ? undefined : 'anonymous', margin: 4, imageSize: 0.3 };
+    }
+    return opts;
+  }
+
+  // ==============================
+  // Preview
+  // ==============================
+  function updatePreview() {
+    var opts = buildQROptions(280);
+    downloadPng.disabled = !opts;
+    downloadSvg.disabled = !opts;
+    if (!opts) {
+      previewArea.innerHTML = '<span style="color:#666">Enter content to preview</span>';
+      outputUrl.value = '';
+      return;
+    }
+    previewArea.innerHTML = '';
+    if (qrCode) { qrCode.update(opts); } else { qrCode = new QRCodeStyling(opts); }
+    qrCode.append(previewArea);
+    outputUrl.value = buildUrl();
+    saveHash();
+  }
+
+  function scheduleUpdate() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(updatePreview, 200);
+  }
+
+  // Global input listeners
+  $('controls').addEventListener('input', scheduleUpdate);
+  $('controls').addEventListener('change', scheduleUpdate);
+
+  // ==============================
+  // Downloads
+  // ==============================
+  downloadPng.addEventListener('click', function(){
+    var sz = parseInt(qrSize.value,10)||300;
+    var opts = buildQROptions(sz);
+    if(opts) new QRCodeStyling(opts).download({name:'qr-code',extension:'png'});
+  });
+  downloadSvg.addEventListener('click', function(){
+    var sz = parseInt(qrSize.value,10)||300;
+    var opts = buildQROptions(sz);
+    if(opts) new QRCodeStyling(opts).download({name:'qr-code',extension:'svg'});
+  });
+
+  // ==============================
+  // Copy URL
+  // ==============================
+  copyBtn.addEventListener('click', function(){
+    var u = outputUrl.value; if(!u) return;
+    navigator.clipboard.writeText(u).then(function(){
+      copyBtn.textContent='Copied!'; copyBtn.classList.add('copied');
+      setTimeout(function(){ copyBtn.textContent='Copy'; copyBtn.classList.remove('copied'); },1500);
+    });
+  });
+
+  // ==============================
+  // Theme toggle
+  // ==============================
+  var themeBtn = $('theme-toggle');
+  function applyTheme(light) {
+    document.documentElement.classList.toggle('light', light);
+    themeBtn.textContent = light ? '🌙' : '☀️';
+    try { localStorage.setItem('qr-wizard-theme', light ? 'light' : 'dark'); } catch(e){}
+  }
+  themeBtn.addEventListener('click', function(){
+    applyTheme(!document.documentElement.classList.contains('light'));
+  });
+  try { if(localStorage.getItem('qr-wizard-theme')==='light') applyTheme(true); } catch(e){}
+
+  // ==============================
+  // Presets (localStorage)
+  // ==============================
+  var PRESET_KEY = 'qr-wizard-presets';
+  var presetSelect = $('preset-select');
+
+  function getPresets() { try { return JSON.parse(localStorage.getItem(PRESET_KEY))||{}; } catch(e){ return {}; } }
+  function savePresets(p) { try { localStorage.setItem(PRESET_KEY, JSON.stringify(p)); } catch(e){} }
+
+  function getStateObj() {
+    return {
+      tab: currentTab,
+      'input-url': $('input-url').value, 'input-text': $('input-text').value,
+      'wifi-ssid': $('wifi-ssid').value, 'wifi-password': $('wifi-password').value,
+      'wifi-encryption': $('wifi-encryption').value, 'wifi-hidden': $('wifi-hidden').checked,
+      'email-address': $('email-address').value, 'email-subject': $('email-subject').value, 'email-body': $('email-body').value,
+      'phone-number': $('phone-number').value,
+      'sms-number': $('sms-number').value, 'sms-body': $('sms-body').value,
+      'vcard-first': $('vcard-first').value, 'vcard-last': $('vcard-last').value,
+      'vcard-org': $('vcard-org').value, 'vcard-title': $('vcard-title').value,
+      'vcard-phone': $('vcard-phone').value, 'vcard-email': $('vcard-email').value,
+      'vcard-url': $('vcard-url').value, 'vcard-address': $('vcard-address').value,
+      'event-title': $('event-title').value, 'event-location': $('event-location').value,
+      'event-description': $('event-description').value, 'event-start': $('event-start').value, 'event-end': $('event-end').value,
+      'geo-lat': $('geo-lat').value, 'geo-lng': $('geo-lng').value, 'geo-query': $('geo-query').value,
+      fg: fgHex.value, bg: bgHex.value,
+      cornerEnable: cornerEnable.checked, corner: cornerHex.value,
+      size: qrSize.value, margin: qrMargin.value,
+      dotStyle: dotStyle.value, cornerSquareStyle: cornerSquare.value, cornerDotStyle: cornerDot.value,
+      ecl: ecl.value, logo: logoUrl.value,
+      anim: animSelect.value, refresh: refreshInterval.value, dataUrl: dataUrlInput.value,
+      borderW: borderW.value, borderR: borderR.value, borderColor: borderHex.value,
+      shadowSize: shadowSize.value, shadowColor: shadowHex.value,
+      css: customCss.value
+    };
+  }
+
+  function loadStateObj(s) {
+    if (!s) return;
+    // Tab
+    if (s.tab) {
+      currentTab = s.tab;
+      tabBtns.forEach(function(b){ b.classList.toggle('active', b.dataset.tab===s.tab); });
+      tabContents.forEach(function(c){ c.classList.toggle('active', c.id===s.tab); });
+    }
+    // Text fields
+    var fields = ['input-url','input-text','wifi-ssid','wifi-password','email-address','email-subject',
+      'email-body','phone-number','sms-number','sms-body','vcard-first','vcard-last','vcard-org',
+      'vcard-title','vcard-phone','vcard-email','vcard-url','vcard-address','event-title',
+      'event-location','event-description','event-start','event-end','geo-lat','geo-lng','geo-query'];
+    fields.forEach(function(f){ if(s[f]!==undefined) $(f).value = s[f]; });
+    // Selects
+    if(s['wifi-encryption']) $('wifi-encryption').value = s['wifi-encryption'];
+    if(s['wifi-hidden']!==undefined) $('wifi-hidden').checked = s['wifi-hidden'];
+    // Colors
+    if(s.fg) { fgHex.value=s.fg; fgPicker.value='#'+s.fg.substring(0,6); fgOpacity.value=parseInt(s.fg.substring(6,8),16); fgOpacityVal.textContent=s.fg.substring(6,8); }
+    if(s.bg) { bgHex.value=s.bg; bgPicker.value='#'+s.bg.substring(0,6); bgOpacity.value=parseInt(s.bg.substring(6,8),16); bgOpacityVal.textContent=s.bg.substring(6,8); }
+    if(s.cornerEnable!==undefined) { cornerEnable.checked=s.cornerEnable; cornerSection.style.display=s.cornerEnable?'block':'none'; }
+    if(s.corner) { cornerHex.value=s.corner; cornerPicker.value='#'+s.corner.substring(0,6); cornerOpacity.value=parseInt(s.corner.substring(6,8),16); cornerOpacityVal.textContent=s.corner.substring(6,8); }
+    if(s.size) qrSize.value=s.size;
+    if(s.margin) qrMargin.value=s.margin;
+    if(s.dotStyle) dotStyle.value=s.dotStyle;
+    if(s.cornerSquareStyle) cornerSquare.value=s.cornerSquareStyle;
+    if(s.cornerDotStyle) cornerDot.value=s.cornerDotStyle;
+    if(s.ecl) ecl.value=s.ecl;
+    if(s.logo!==undefined) logoUrl.value=s.logo;
+    if(s.anim!==undefined) animSelect.value=s.anim;
+    if(s.refresh!==undefined) refreshInterval.value=s.refresh;
+    if(s.dataUrl!==undefined) dataUrlInput.value=s.dataUrl;
+    if(s.borderW!==undefined) borderW.value=s.borderW;
+    if(s.borderR!==undefined) borderR.value=s.borderR;
+    if(s.borderColor) { borderHex.value=s.borderColor; borderPicker.value='#'+s.borderColor.substring(0,6); }
+    if(s.shadowSize!==undefined) shadowSize.value=s.shadowSize;
+    if(s.shadowColor) { shadowHex.value=s.shadowColor; shadowPicker.value='#'+s.shadowColor.substring(0,6); }
+    if(s.css!==undefined) customCss.value=s.css;
+  }
+
+  function refreshPresetList() {
+    var presets = getPresets();
+    presetSelect.innerHTML = '<option value="">— Presets —</option>';
+    Object.keys(presets).sort().forEach(function(name){
+      var opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      presetSelect.appendChild(opt);
+    });
+  }
+
+  presetSelect.addEventListener('change', function(){
+    var name = presetSelect.value; if(!name) return;
+    var presets = getPresets();
+    if(presets[name]) { loadStateObj(presets[name]); updatePreview(); }
+  });
+
+  $('preset-save').addEventListener('click', function(){
+    var name = prompt('Preset name:');
+    if(!name) return;
+    var presets = getPresets();
+    presets[name] = getStateObj();
+    savePresets(presets);
+    refreshPresetList();
+    presetSelect.value = name;
+  });
+
+  $('preset-delete').addEventListener('click', function(){
+    var name = presetSelect.value;
+    if(!name) return;
+    if(!confirm('Delete preset "'+name+'"?')) return;
+    var presets = getPresets();
+    delete presets[name];
+    savePresets(presets);
+    refreshPresetList();
+  });
+
+  refreshPresetList();
+
+  // ==============================
+  // Shareable URL (hash state)
+  // ==============================
+  function saveHash() {
+    try {
+      var state = getStateObj();
+      var encoded = btoa(JSON.stringify(state));
+      history.replaceState(null, '', '#' + encoded);
+    } catch(e){}
+  }
+
+  function loadHash() {
+    try {
+      var hash = window.location.hash.slice(1);
+      if (!hash) return false;
+      var state = JSON.parse(atob(hash));
+      loadStateObj(state);
+      return true;
+    } catch(e){ return false; }
+  }
+
+  $('share-btn').addEventListener('click', function(){
+    navigator.clipboard.writeText(window.location.href).then(function(){
+      $('share-btn').textContent = '✅';
+      setTimeout(function(){ $('share-btn').textContent = '🔗'; }, 1500);
+    });
+  });
+
+  // ==============================
+  // Init
+  // ==============================
+  loadHash();
+  updatePreview();
+})();
+</script>
+
+</body>
+</html>
