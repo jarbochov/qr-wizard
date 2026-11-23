@@ -216,6 +216,20 @@
 
   .hint { font-size: 0.73rem; color: var(--text-muted); margin-top: 0.35rem; }
   code { background: var(--surface2); padding: 0.1em 0.35em; border-radius: 3px; font-size: 0.82em; }
+  .info-banner {
+    background: rgba(233, 69, 96, 0.1);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+  .color-controls-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
 
   /* --- Collapsible sections --- */
   details { margin-top: 1rem; }
@@ -253,6 +267,11 @@
 <div class="layout">
   <!-- ==================== LEFT: Controls ==================== -->
   <div class="panel" id="controls">
+
+    <h3>Content</h3>
+    <div class="info-banner">
+      <strong>Static text only:</strong> QR codes encode fixed data that cannot be edited after creation. If you may need to change where a link goes later, encode a <strong>URL forwarder</strong> — ideally a <strong>redirect on a domain you control</strong>.
+    </div>
 
     <!-- Content type tabs -->
     <div class="tabs">
@@ -365,13 +384,19 @@
       </div>
       <div>
         <label>Background</label>
-        <div class="color-field">
-          <input type="color" id="bg-picker" value="#ffffff">
-          <input type="text" id="bg-hex" value="00000000" maxlength="8">
+        <div id="bg-color-controls">
+          <div class="color-field">
+            <input type="color" id="bg-picker" value="#ffffff">
+            <input type="text" id="bg-hex" value="FFFFFFFF" maxlength="8">
+          </div>
+          <div class="opacity-row">
+            <input type="range" id="bg-opacity" min="0" max="255" value="255">
+            <span id="bg-opacity-val">FF</span>
+          </div>
         </div>
-        <div class="opacity-row">
-          <input type="range" id="bg-opacity" min="0" max="255" value="0">
-          <span id="bg-opacity-val">00</span>
+        <div class="checkbox-row">
+          <input type="checkbox" id="bg-transparent">
+          <label for="bg-transparent">Transparent background</label>
         </div>
       </div>
     </div>
@@ -443,27 +468,23 @@
     <label for="logo-url">Logo Image URL</label>
     <input type="url" id="logo-url" placeholder="https://example.com/logo.png">
     <label for="logo-file">Or choose a local file</label>
-    <input type="file" id="logo-file" accept="image/*" style="font-size:0.82rem;margin-top:0.2rem;">
-    <p class="hint">Logo forces error correction to High. Remote URLs may fail locally (CORS) — use a local file or <code>python3 -m http.server</code>.</p>
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem;">
+      <input type="file" id="logo-file" accept="image/*" style="font-size:0.82rem;flex:1;">
+      <button type="button" class="action-btn" id="logo-clear" style="display:none;">Clear</button>
+    </div>
+    <p class="hint">Logo forces error correction to High. Remote URLs may fail locally (CORS) — use a local file for PNG/SVG export.</p>
 
-    <!-- ===== Extras (collapsible) ===== -->
+    <!-- ===== Advanced Styling (collapsible) ===== -->
     <details>
-      <summary>Extras</summary>
+      <summary>Advanced Styling</summary>
 
-      <label for="anim-select">Entrance Animation</label>
+      <label for="anim-select">Entrance Animation (Viewer URL)</label>
       <select id="anim-select">
         <option value="">None</option>
         <option value="fade">Fade In</option>
         <option value="pulse">Pulse</option>
         <option value="bounce">Bounce</option>
       </select>
-
-      <label for="refresh-interval">Auto-Refresh (seconds, 0 = off)</label>
-      <input type="number" id="refresh-interval" value="0" min="0" max="3600">
-
-      <label for="data-url">Dynamic Data URL (fetches content from remote endpoint)</label>
-      <input type="url" id="data-url" placeholder="https://myapi.com/current-qr-content">
-      <p class="hint">If set, the viewer fetches this URL and encodes the response as QR data. Pair with auto-refresh above.</p>
 
       <h3 style="margin-top:1rem">Border</h3>
       <div class="row-3">
@@ -522,7 +543,9 @@
   // Helpers
   // ==============================
   function hex8ToRgba(h) {
-    h = h.replace(/^#/, '').padEnd(8, 'F');
+    var clean = (h || '').replace(/[^0-9a-fA-F]/g, '');
+    if (clean.length < 6) return 'rgba(0,0,0,1)';
+    h = clean.substring(0, 8).padEnd(8, 'F');
     var r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16);
     var b = parseInt(h.substring(4,6),16), a = parseInt(h.substring(6,8),16)/255;
     return 'rgba('+r+','+g+','+b+','+a.toFixed(3)+')';
@@ -540,6 +563,9 @@
     }
     function syncToHex() {
       var rgb = picker.value.slice(1).toUpperCase();
+      if (slider && parseInt(slider.value, 10) === 0) {
+        slider.value = 255;
+      }
       var aa = slider ? alphaToHex(slider.value) : 'FF';
       hexEl.value = rgb + aa;
       if (label) label.textContent = aa;
@@ -569,12 +595,13 @@
 
   var fgPicker = $('fg-picker'),   fgHex = $('fg-hex'),     fgOpacity = $('fg-opacity'),     fgOpacityVal = $('fg-opacity-val');
   var bgPicker = $('bg-picker'),   bgHex = $('bg-hex'),     bgOpacity = $('bg-opacity'),     bgOpacityVal = $('bg-opacity-val');
+  var bgTransparent = $('bg-transparent'), bgColorControls = $('bg-color-controls');
   var cornerEnable  = $('corner-color-enable'), cornerSection = $('corner-color-section');
   var cornerPicker  = $('corner-picker'), cornerHex = $('corner-hex'), cornerOpacity = $('corner-opacity'), cornerOpacityVal = $('corner-opacity-val');
   var qrSize = $('qr-size'), qrMargin = $('qr-margin');
   var dotStyle = $('dot-style'), cornerSquare = $('corner-square-style'), cornerDot = $('corner-dot-style');
-  var ecl = $('ecl'), logoUrl = $('logo-url'), logoFile = $('logo-file');
-  var animSelect = $('anim-select'), refreshInterval = $('refresh-interval'), dataUrlInput = $('data-url');
+  var ecl = $('ecl'), logoUrl = $('logo-url'), logoFile = $('logo-file'), logoClear = $('logo-clear');
+  var animSelect = $('anim-select');
   var borderW = $('border-w'), borderR = $('border-r'), borderPicker = $('border-picker'), borderHex = $('border-hex');
   var shadowSize = $('shadow-size'), shadowPicker = $('shadow-picker'), shadowHex = $('shadow-hex');
   var customCss = $('custom-css');
@@ -592,6 +619,15 @@
   wireColor(cornerPicker, cornerHex, cornerOpacity, cornerOpacityVal);
   wireColor(borderPicker, borderHex, null, null);
   wireColor(shadowPicker, shadowHex, null, null);
+
+  // Background transparent toggle
+  function syncBgTransparentUI() {
+    bgColorControls.classList.toggle('color-controls-disabled', bgTransparent.checked);
+  }
+  bgTransparent.addEventListener('change', function(){
+    syncBgTransparentUI();
+    scheduleUpdate();
+  });
 
   // Corner color toggle
   cornerEnable.addEventListener('change', function(){
@@ -616,16 +652,27 @@
   // ==============================
   // Logo
   // ==============================
+  function updateLogoClearBtn() {
+    logoClear.style.display = (localLogoDataUrl || logoUrl.value.trim()) ? 'inline-block' : 'none';
+  }
   logoFile.addEventListener('change', function(e){
     var file = e.target.files[0];
     if (file) {
       var reader = new FileReader();
-      reader.onload = function(ev){ localLogoDataUrl = ev.target.result; logoUrl.value = ''; scheduleUpdate(); };
+      reader.onload = function(ev){ localLogoDataUrl = ev.target.result; logoUrl.value = ''; updateLogoClearBtn(); scheduleUpdate(); };
       reader.readAsDataURL(file);
-    } else { localLogoDataUrl = null; scheduleUpdate(); }
+    } else { localLogoDataUrl = null; updateLogoClearBtn(); scheduleUpdate(); }
   });
   logoUrl.addEventListener('input', function(){
     if (logoUrl.value.trim()) { localLogoDataUrl = null; logoFile.value = ''; }
+    updateLogoClearBtn();
+    scheduleUpdate();
+  });
+  logoClear.addEventListener('click', function(){
+    localLogoDataUrl = null;
+    logoFile.value = '';
+    logoUrl.value = '';
+    updateLogoClearBtn();
     scheduleUpdate();
   });
   function getPreviewLogo() { return localLogoDataUrl || logoUrl.value.trim(); }
@@ -690,18 +737,16 @@
   // ==============================
   function buildUrl() {
     var data = getData();
-    var dynUrl = dataUrlInput.value.trim();
-    if (!data && !dynUrl) return '';
+    if (!data) return '';
     var base = window.location.href.replace(/[#?].*$/,'').replace(/\/wizard\/.*$/,'/index.html');
     var p = new URLSearchParams();
 
-    if (dynUrl) { p.set('dataUrl', dynUrl); }
-    if (data) { p.set('data', data); }
+    p.set('data', data);
 
     var fg = fgHex.value.trim().toUpperCase();
     if (fg !== '000000FF') p.set('fg', fg);
 
-    var bg = bgHex.value.trim().toUpperCase();
+    var bg = bgTransparent.checked ? '00000000' : bgHex.value.trim().toUpperCase();
     if (bg !== '00000000') p.set('bg', bg);
 
     if (cornerEnable.checked) {
@@ -721,7 +766,6 @@
     else if(eclVal!=='M') { p.set('ecl',eclVal); }
 
     var an = animSelect.value; if(an) p.set('anim',an);
-    var ri = parseInt(refreshInterval.value,10); if(ri>0) p.set('refresh',ri);
 
     var bw = parseInt(borderW.value,10); if(bw>0) p.set('borderW',bw);
     var br = parseInt(borderR.value,10); if(br>0) p.set('borderR',br);
@@ -742,7 +786,7 @@
     var data = getData();
     if (!data) return null;
     var fg = hex8ToRgba(fgHex.value);
-    var bg = hex8ToRgba(bgHex.value);
+    var bg = bgTransparent.checked ? 'rgba(0,0,0,0)' : hex8ToRgba(bgHex.value);
     var logo = getPreviewLogo();
     var cf = cornerEnable.checked ? hex8ToRgba(cornerHex.value) : fg;
     var eclVal = logo ? 'H' : ecl.value;
@@ -857,12 +901,12 @@
       'event-title': $('event-title').value, 'event-location': $('event-location').value,
       'event-description': $('event-description').value, 'event-start': $('event-start').value, 'event-end': $('event-end').value,
       'geo-lat': $('geo-lat').value, 'geo-lng': $('geo-lng').value, 'geo-query': $('geo-query').value,
-      fg: fgHex.value, bg: bgHex.value,
+      fg: fgHex.value, bg: bgHex.value, bgTransparent: bgTransparent.checked,
       cornerEnable: cornerEnable.checked, corner: cornerHex.value,
       size: qrSize.value, margin: qrMargin.value,
       dotStyle: dotStyle.value, cornerSquareStyle: cornerSquare.value, cornerDotStyle: cornerDot.value,
       ecl: ecl.value, logo: logoUrl.value,
-      anim: animSelect.value, refresh: refreshInterval.value, dataUrl: dataUrlInput.value,
+      anim: animSelect.value,
       borderW: borderW.value, borderR: borderR.value, borderColor: borderHex.value,
       shadowSize: shadowSize.value, shadowColor: shadowHex.value,
       css: customCss.value
@@ -888,7 +932,15 @@
     if(s['wifi-hidden']!==undefined) $('wifi-hidden').checked = s['wifi-hidden'];
     // Colors
     if(s.fg) { fgHex.value=s.fg; fgPicker.value='#'+s.fg.substring(0,6); fgOpacity.value=parseInt(s.fg.substring(6,8),16); fgOpacityVal.textContent=s.fg.substring(6,8); }
-    if(s.bg) { bgHex.value=s.bg; bgPicker.value='#'+s.bg.substring(0,6); bgOpacity.value=parseInt(s.bg.substring(6,8),16); bgOpacityVal.textContent=s.bg.substring(6,8); }
+    if(s.bg) {
+      if (s.bg === '00000000' && s.bgTransparent === undefined) {
+        bgTransparent.checked = true;
+      } else {
+        bgHex.value=s.bg; bgPicker.value='#'+s.bg.substring(0,6); bgOpacity.value=parseInt(s.bg.substring(6,8),16); bgOpacityVal.textContent=s.bg.substring(6,8);
+      }
+    }
+    if(s.bgTransparent!==undefined) bgTransparent.checked = s.bgTransparent;
+    syncBgTransparentUI();
     if(s.cornerEnable!==undefined) { cornerEnable.checked=s.cornerEnable; cornerSection.style.display=s.cornerEnable?'block':'none'; }
     if(s.corner) { cornerHex.value=s.corner; cornerPicker.value='#'+s.corner.substring(0,6); cornerOpacity.value=parseInt(s.corner.substring(6,8),16); cornerOpacityVal.textContent=s.corner.substring(6,8); }
     if(s.size) qrSize.value=s.size;
@@ -897,10 +949,8 @@
     if(s.cornerSquareStyle) cornerSquare.value=s.cornerSquareStyle;
     if(s.cornerDotStyle) cornerDot.value=s.cornerDotStyle;
     if(s.ecl) ecl.value=s.ecl;
-    if(s.logo!==undefined) logoUrl.value=s.logo;
+    if(s.logo!==undefined) { logoUrl.value=s.logo; updateLogoClearBtn(); }
     if(s.anim!==undefined) animSelect.value=s.anim;
-    if(s.refresh!==undefined) refreshInterval.value=s.refresh;
-    if(s.dataUrl!==undefined) dataUrlInput.value=s.dataUrl;
     if(s.borderW!==undefined) borderW.value=s.borderW;
     if(s.borderR!==undefined) borderR.value=s.borderR;
     if(s.borderColor) { borderHex.value=s.borderColor; borderPicker.value='#'+s.borderColor.substring(0,6); }
@@ -953,7 +1003,8 @@
   function saveHash() {
     try {
       var state = getStateObj();
-      var encoded = btoa(JSON.stringify(state));
+      var json = JSON.stringify(state);
+      var encoded = btoa(unescape(encodeURIComponent(json)));
       history.replaceState(null, '', '#' + encoded);
     } catch(e){}
   }
@@ -962,7 +1013,8 @@
     try {
       var hash = window.location.hash.slice(1);
       if (!hash) return false;
-      var state = JSON.parse(atob(hash));
+      var json = decodeURIComponent(escape(atob(hash)));
+      var state = JSON.parse(json);
       loadStateObj(state);
       return true;
     } catch(e){ return false; }

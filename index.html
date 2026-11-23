@@ -50,7 +50,9 @@
 
   // --- Helpers ---
   function hex8ToRgba(hex8) {
-    const h = hex8.replace(/^#/, '').padEnd(8, 'F');
+    const clean = (hex8 || '').replace(/[^0-9a-fA-F]/g, '');
+    if (clean.length < 6) return 'rgba(0,0,0,1)';
+    const h = clean.substring(0, 8).padEnd(8, 'F');
     const r = parseInt(h.substring(0, 2), 16);
     const g = parseInt(h.substring(2, 4), 16);
     const b = parseInt(h.substring(4, 6), 16);
@@ -59,15 +61,10 @@
   }
 
   // --- Data ---
-  const data    = params.get('data') || '';
-  const dataUrl = params.get('dataUrl') || '';
-  const mode    = params.get('mode') || '';  // 'live' = listen for wizard pushes
-  const refresh = parseInt(params.get('refresh'), 10) || 0;
+  const data = params.get('data') || '';
 
-  const isLive = (mode === 'live');
-
-  if (!data && !dataUrl && !isLive) {
-    document.getElementById('qr-container').textContent = 'No data, dataUrl, or mode=live parameter provided.';
+  if (!data) {
+    document.getElementById('qr-container').textContent = 'No data parameter provided.';
     return;
   }
 
@@ -138,51 +135,7 @@
     qrCode.append(container);
   }
 
-  // --- Dynamic mode: fetch content from dataUrl ---
-  function fetchAndRender() {
-    fetch(dataUrl, { cache: 'no-store' })
-      .then(function(r) { return r.text(); })
-      .then(function(text) { renderQR(text.trim()); })
-      .catch(function(e) { console.error('dataUrl fetch failed:', e); });
-  }
-
-  // --- Live mode: poll qr-live.json written by the wizard ---
-  if (isLive) {
-    var lastData = '';
-    var liveFile = params.get('liveFile') || 'qr-live.json';
-
-    function pollLiveFile() {
-      fetch(liveFile, { cache: 'no-store' })
-        .then(function(r) { return r.json(); })
-        .then(function(obj) {
-          var qrData = obj && obj.data ? obj.data : '';
-          if (qrData && qrData !== lastData) {
-            lastData = qrData;
-            renderQR(qrData);
-          }
-        })
-        .catch(function() {}); // file may not exist yet
-    }
-
-    // Poll every 1 second
-    pollLiveFile();
-    setInterval(pollLiveFile, 1000);
-
-    // Render static data as fallback until first successful poll
-    if (data) renderQR(data);
-  }
-
-  // --- Dynamic URL mode ---
-  else if (dataUrl) {
-    fetchAndRender();
-    if (refresh > 0) setInterval(fetchAndRender, refresh * 1000);
-  }
-
-  // --- Static mode ---
-  else {
-    renderQR(data);
-    if (refresh > 0) setInterval(function() { window.location.reload(); }, refresh * 1000);
-  }
+  renderQR(data);
 })();
 </script>
 
