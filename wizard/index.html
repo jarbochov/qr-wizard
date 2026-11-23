@@ -6,33 +6,44 @@
 <title>QR Code Wizard</title>
 <style>
   :root {
-    --bg: #1a1a2e;
-    --surface: #16213e;
-    --surface2: #0f3460;
-    --accent: #e94560;
-    --text: #eee;
-    --text-muted: #999;
-    --radius: 8px;
-    --input-bg: #111;
+    --bg: #0b0f19;
+    --surface: #111827;
+    --surface2: #1f2937;
+    --border: rgba(255, 255, 255, 0.09);
+    --accent: #6366f1;
+    --accent-hover: #4f46e5;
+    --accent-soft: rgba(99, 102, 241, 0.14);
+    --text: #f3f4f6;
+    --text-muted: #9ca3af;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --input-bg: #0f172a;
+    --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
   }
   :root.light {
-    --bg: #f0f0f5;
-    --surface: #fff;
-    --surface2: #d0d0dd;
-    --accent: #d6336c;
-    --text: #222;
-    --text-muted: #666;
-    --input-bg: #fff;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --surface2: #f1f5f9;
+    --border: #e2e8f0;
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-soft: rgba(79, 70, 229, 0.09);
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --input-bg: #ffffff;
+    --shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.08);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
-    padding: 1.2rem 2rem 2rem;
+    padding: 1.5rem 2rem 3rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
     transition: background 0.25s, color 0.25s;
   }
 
@@ -41,79 +52,118 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    max-width: 1200px;
-    margin: 0 auto 1rem;
+    max-width: 1160px;
+    margin: 0 auto 1.25rem;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
-  .header h1 { font-size: 1.5rem; }
+  .brand { display: flex; align-items: center; gap: 0.75rem; }
+  .brand-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--accent-soft); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem;
+  }
+  .header h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+  .header-sub { font-size: 0.78rem; color: var(--text-muted); }
   .header-actions { display: flex; gap: 0.5rem; align-items: center; }
   .icon-btn {
     background: var(--surface);
-    border: 1px solid var(--surface2);
+    border: 1px solid var(--border);
     color: var(--text);
-    border-radius: var(--radius);
-    padding: 0.4rem 0.65rem;
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.75rem;
     cursor: pointer;
-    font-size: 1rem;
-    transition: border-color 0.15s;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
   }
-  .icon-btn:hover { border-color: var(--accent); }
+  .icon-btn:hover { border-color: var(--accent); background: var(--surface2); }
+  .icon-btn:active { transform: translateY(1px); }
 
   /* --- Preset bar --- */
   .preset-bar {
     display: flex;
     gap: 0.5rem;
     align-items: center;
-    max-width: 1200px;
-    margin: 0 auto 1rem;
+    max-width: 1160px;
+    margin: 0 auto 1.5rem;
+    padding: 0.65rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     flex-wrap: wrap;
+  }
+  .preset-label {
+    font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-muted); margin-right: 0.25rem;
   }
   .preset-bar select {
     flex: 1;
-    min-width: 150px;
-    max-width: 300px;
+    min-width: 160px;
+    max-width: 280px;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.83rem;
   }
   .preset-bar button {
-    padding: 0.4rem 0.7rem;
-    border-radius: var(--radius);
-    border: 1px solid var(--surface2);
-    background: var(--surface);
+    padding: 0.42rem 0.8rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface2);
     color: var(--text);
     cursor: pointer;
     font-size: 0.8rem;
-    transition: border-color 0.15s;
+    font-weight: 500;
+    transition: border-color 0.15s, opacity 0.15s;
   }
   .preset-bar button:hover { border-color: var(--accent); }
   .preset-bar .save-btn { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .preset-bar .save-btn:hover { background: var(--accent-hover); }
 
   /* --- Layout --- */
   .layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    max-width: 1200px;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 1.75rem;
+    max-width: 1160px;
     margin: 0 auto;
+    align-items: start;
   }
 
   .panel {
     background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .preview-panel {
+    position: sticky;
+    top: 1.5rem;
   }
 
   /* --- Tabs --- */
-  .tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1.2rem; }
+  .tabs {
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+    margin-bottom: 1.15rem;
+    padding: 0.35rem;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
   .tab-btn {
-    padding: 0.4rem 0.8rem;
-    border: 1px solid var(--surface2);
+    padding: 0.38rem 0.72rem;
+    border: none;
     background: transparent;
     color: var(--text-muted);
-    border-radius: var(--radius);
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
+    font-weight: 500;
     transition: all 0.15s;
   }
-  .tab-btn:hover { border-color: var(--accent); color: var(--text); }
-  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tab-btn:hover { color: var(--text); background: var(--surface2); }
+  .tab-btn.active { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(99,102,241,0.3); }
   .tab-content { display: none; }
   .tab-content.active { display: block; }
 
@@ -121,9 +171,10 @@
   label {
     display: block;
     font-size: 0.78rem;
+    font-weight: 500;
     color: var(--text-muted);
-    margin-bottom: 0.25rem;
-    margin-top: 0.85rem;
+    margin-bottom: 0.3rem;
+    margin-top: 0.9rem;
   }
   label:first-child { margin-top: 0; }
 
@@ -131,110 +182,125 @@
   input[type="email"], input[type="tel"], input[type="datetime-local"],
   textarea, select {
     width: 100%;
-    padding: 0.5rem 0.65rem;
-    border: 1px solid var(--surface2);
-    border-radius: var(--radius);
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     background: var(--input-bg);
     color: var(--text);
     font-size: 0.88rem;
     outline: none;
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
-  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
-  textarea { resize: vertical; min-height: 55px; }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  textarea { resize: vertical; min-height: 64px; }
 
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
   .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.8rem; }
 
   /* --- Color field: picker + hex + opacity --- */
-  .color-field { display: flex; align-items: center; gap: 0.4rem; }
+  .color-field { display: flex; align-items: center; gap: 0.45rem; }
   .color-field input[type="color"] {
-    width: 34px; height: 34px; border: none; border-radius: 4px;
-    cursor: pointer; padding: 0; background: none;
+    width: 36px; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    cursor: pointer; padding: 2px; background: var(--input-bg); flex-shrink: 0;
   }
   .color-field input[type="text"] { flex: 1; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.82rem; }
   .opacity-row {
-    display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;
+    display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem;
   }
-  .opacity-row input[type="range"] { flex: 1; accent-color: var(--accent); }
-  .opacity-row span { font-size: 0.78rem; min-width: 2.5em; text-align: right; color: var(--text-muted); }
+  .opacity-row input[type="range"] { flex: 1; accent-color: var(--accent); cursor: pointer; }
+  .opacity-row span { font-size: 0.75rem; min-width: 2.3em; text-align: right; color: var(--text-muted); font-family: 'SF Mono', monospace; }
 
   .checkbox-row {
-    display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;
+    display: flex; align-items: center; gap: 0.5rem; margin-top: 0.65rem;
   }
-  .checkbox-row input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent); }
-  .checkbox-row label { margin: 0; font-size: 0.82rem; color: var(--text); }
+  .checkbox-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+  .checkbox-row label { margin: 0; font-size: 0.82rem; color: var(--text); cursor: pointer; }
 
   /* --- Section headers --- */
   h3 {
-    font-size: 0.92rem;
-    margin-top: 1.3rem;
-    margin-bottom: 0.3rem;
-    padding-bottom: 0.3rem;
-    border-bottom: 1px solid var(--surface2);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-top: 1.5rem;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
   }
   h3:first-child { margin-top: 0; }
 
   /* --- Preview --- */
   .preview-area {
     display: flex; align-items: center; justify-content: center;
-    min-height: 300px;
-    background: repeating-conic-gradient(#2a2a2a 0% 25%, #333 0% 50%) 50% / 16px 16px;
-    border-radius: var(--radius);
-    margin-bottom: 1rem;
-    padding: 1rem;
+    min-height: 310px;
+    background: repeating-conic-gradient(#1e293b 0% 25%, #273449 0% 50%) 50% / 16px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.75rem;
+    padding: 1.25rem;
+    overflow: hidden;
   }
   :root.light .preview-area {
-    background: repeating-conic-gradient(#ddd 0% 25%, #eee 0% 50%) 50% / 16px 16px;
+    background: repeating-conic-gradient(#e2e8f0 0% 25%, #f1f5f9 0% 50%) 50% / 16px 16px;
   }
 
   /* --- Buttons --- */
   .action-btn {
-    padding: 0.35rem 0.7rem;
+    padding: 0.42rem 0.75rem;
     background: var(--accent);
     color: #fff;
     border: none;
-    border-radius: 4px;
-    font-size: 0.78rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.15s;
+    transition: background 0.15s, transform 0.1s, opacity 0.15s;
   }
-  .action-btn:hover { opacity: 0.85; }
-  .action-btn.copied { background: #2ecc71; }
+  .action-btn:hover { background: var(--accent-hover); }
+  .action-btn:active { transform: translateY(1px); }
+  .action-btn.copied { background: #10b981; }
 
-  .download-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-  .download-btn { flex: 1; padding: 0.55rem 1rem; font-size: 0.88rem; border-radius: var(--radius); }
-  .download-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .download-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 1.25rem; }
+  .download-btn { padding: 0.6rem 0.75rem; font-size: 0.84rem; border-radius: var(--radius-sm); }
+  .download-btn.secondary {
+    background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+  }
+  .download-btn.secondary:hover { border-color: var(--accent); background: var(--surface2); }
+  .download-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
   .url-output { position: relative; }
   .url-output textarea {
-    width: 100%; min-height: 70px;
-    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.76rem;
+    width: 100%; min-height: 76px; padding-right: 4.5rem;
+    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.75rem;
     word-break: break-all;
   }
-  .copy-btn { position: absolute; top: 5px; right: 5px; }
+  .copy-btn { position: absolute; top: 8px; right: 8px; }
 
-  .hint { font-size: 0.73rem; color: var(--text-muted); margin-top: 0.35rem; }
-  code { background: var(--surface2); padding: 0.1em 0.35em; border-radius: 3px; font-size: 0.82em; }
+  .hint { font-size: 0.74rem; color: var(--text-muted); margin-top: 0.4rem; }
+  code { background: var(--surface2); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.82em; }
   .info-banner {
-    background: rgba(233, 69, 96, 0.1);
-    border-left: 3px solid var(--accent);
-    border-radius: 0 var(--radius) var(--radius) 0;
-    padding: 0.6rem 0.8rem;
+    background: var(--accent-soft);
+    border: 1px solid rgba(99, 102, 241, 0.28);
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 0.85rem;
     font-size: 0.78rem;
     line-height: 1.45;
     color: var(--text);
     margin-bottom: 1rem;
   }
   .color-controls-disabled {
-    opacity: 0.45;
+    opacity: 0.4;
     pointer-events: none;
   }
   .warn-banner {
-    background: rgba(243, 156, 18, 0.14);
-    border-left: 3px solid #f39c12;
-    border-radius: 0 var(--radius) var(--radius) 0;
-    padding: 0.5rem 0.75rem;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 0.8rem;
     font-size: 0.78rem;
     color: var(--text);
     margin-bottom: 0.85rem;
@@ -246,30 +312,42 @@
     align-items: center;
     font-size: 0.75rem;
     color: var(--text-muted);
-    margin-bottom: 0.65rem;
+    margin-bottom: 0.75rem;
   }
 
-  @media (max-width: 768px) { .layout { grid-template-columns: 1fr; } }
+  @media (max-width: 860px) {
+    body { padding: 1rem; }
+    .layout { grid-template-columns: 1fr; }
+    .preview-panel { position: static; }
+    .download-row { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
 
 <!-- Header -->
 <div class="header">
-  <h1>🔳 QR Code Wizard</h1>
+  <div class="brand">
+    <div class="brand-icon">🔳</div>
+    <div>
+      <h1>QR Code Wizard</h1>
+      <div class="header-sub">Static QR code generator &amp; shareable viewer</div>
+    </div>
+  </div>
   <div class="header-actions">
     <button class="icon-btn" id="reset-btn" title="Reset to defaults">↺ Reset</button>
+    <button class="icon-btn" id="share-btn" title="Copy shareable wizard link">🔗 Share</button>
     <button class="icon-btn" id="theme-toggle" title="Toggle light/dark theme">🌓</button>
-    <button class="icon-btn" id="share-btn" title="Copy shareable wizard link">🔗</button>
   </div>
 </div>
 
 <!-- Presets -->
 <div class="preset-bar">
+  <span class="preset-label">Presets</span>
   <select id="preset-select">
-    <option value="">— Presets —</option>
+    <option value="">— Select preset —</option>
   </select>
-  <button class="save-btn" id="preset-save">Save</button>
+  <button class="save-btn" id="preset-save">Save Current</button>
   <button id="preset-delete">Delete</button>
 </div>
 
@@ -284,15 +362,15 @@
 
     <!-- Content type tabs -->
     <div class="tabs">
-      <button class="tab-btn active" data-tab="tab-url">URL</button>
-      <button class="tab-btn" data-tab="tab-text">Text</button>
-      <button class="tab-btn" data-tab="tab-wifi">WiFi</button>
-      <button class="tab-btn" data-tab="tab-email">Email</button>
-      <button class="tab-btn" data-tab="tab-phone">Phone</button>
-      <button class="tab-btn" data-tab="tab-sms">SMS</button>
-      <button class="tab-btn" data-tab="tab-vcard">vCard</button>
-      <button class="tab-btn" data-tab="tab-event">Event</button>
-      <button class="tab-btn" data-tab="tab-geo">Geo</button>
+      <button class="tab-btn active" data-tab="tab-url">🔗 URL</button>
+      <button class="tab-btn" data-tab="tab-text">📝 Text</button>
+      <button class="tab-btn" data-tab="tab-wifi">📶 WiFi</button>
+      <button class="tab-btn" data-tab="tab-email">✉️ Email</button>
+      <button class="tab-btn" data-tab="tab-phone">📞 Phone</button>
+      <button class="tab-btn" data-tab="tab-sms">💬 SMS</button>
+      <button class="tab-btn" data-tab="tab-vcard">👤 vCard</button>
+      <button class="tab-btn" data-tab="tab-event">📅 Event</button>
+      <button class="tab-btn" data-tab="tab-geo">📍 Geo</button>
     </div>
 
     <!-- URL -->
@@ -486,7 +564,7 @@
   </div>
 
   <!-- ==================== RIGHT: Preview + URL ==================== -->
-  <div class="panel">
+  <div class="panel preview-panel">
     <h3>Preview</h3>
     <div class="preview-area" id="preview-area"></div>
     <div class="preview-meta">
@@ -499,8 +577,8 @@
 
     <div class="download-row">
       <button class="action-btn download-btn" id="download-png" disabled>💾 PNG</button>
-      <button class="action-btn download-btn" id="download-svg" disabled>💾 SVG</button>
-      <button class="action-btn download-btn" id="copy-img" disabled>📋 Copy Image</button>
+      <button class="action-btn download-btn secondary" id="download-svg" disabled>📐 SVG</button>
+      <button class="action-btn download-btn secondary" id="copy-img" disabled>📋 Copy Image</button>
     </div>
 
     <h3>QR Viewer URL</h3>
@@ -1019,8 +1097,8 @@
 
   $('share-btn').addEventListener('click', function(){
     navigator.clipboard.writeText(window.location.href).then(function(){
-      $('share-btn').textContent = '✅';
-      setTimeout(function(){ $('share-btn').textContent = '🔗'; }, 1500);
+      $('share-btn').textContent = '✅ Copied';
+      setTimeout(function(){ $('share-btn').textContent = '🔗 Share'; }, 1500);
     });
   });
 
