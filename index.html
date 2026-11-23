@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QR Code Wizard</title>
+<meta name="description" content="A clean, zero-backend static QR code generator for URLs, WiFi, vCards, events, and more.">
+<meta property="og:title" content="QR Code Wizard">
+<meta property="og:description" content="Create custom static QR codes with PNG/SVG export, custom colors, logos, and error correction guidance.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234f46e5'/%3E%3Crect x='5' y='5' width='9' height='9' rx='1.5' fill='none' stroke='%23fff' stroke-width='2.2'/%3E%3Crect x='8' y='8' width='3' height='3' fill='%23fff'/%3E%3Crect x='18' y='5' width='9' height='9' rx='1.5' fill='none' stroke='%23fff' stroke-width='2.2'/%3E%3Crect x='21' y='8' width='3' height='3' fill='%23fff'/%3E%3Crect x='5' y='18' width='9' height='9' rx='1.5' fill='none' stroke='%23fff' stroke-width='2.2'/%3E%3Crect x='8' y='21' width='3' height='3' fill='%23fff'/%3E%3Crect x='18' y='18' width='3' height='3' fill='%23fff'/%3E%3Crect x='24' y='18' width='3' height='3' fill='%23fff'/%3E%3Crect x='21' y='21' width='3' height='3' fill='%23fff'/%3E%3Crect x='18' y='24' width='3' height='3' fill='%23fff'/%3E%3Crect x='24' y='24' width='3' height='3' fill='%23fff'/%3E%3C/svg%3E">
 <style>
   :root {
     --bg: #0b0f19;
@@ -556,6 +560,15 @@
     .download-row { grid-template-columns: 1fr; }
     .guide-grid { grid-template-columns: 1fr; }
   }
+  @media print {
+    body { background: #fff !important; padding: 0; }
+    .header, .preset-bar, #controls, .preview-header, .preview-meta,
+    .warn-banner, .download-row, .url-output, .preview-panel h3,
+    .preview-panel .hint, .guide-card, .footer, .toast { display: none !important; }
+    .layout { display: block; }
+    .panel { border: none !important; box-shadow: none !important; background: transparent !important; padding: 0; }
+    .preview-area { border: none !important; background: #fff !important; min-height: auto; padding: 2rem; }
+  }
 </style>
 </head>
 <body>
@@ -1059,12 +1072,24 @@
   // ==============================
   // Data builders
   // ==============================
+  function escapeWifi(s) {
+    return (s || '').replace(/([\\;,:"])/g, '\\$1');
+  }
+  function getDownloadName() {
+    var raw = '';
+    if (currentTab === 'tab-url') raw = $('input-url').value.replace(/^https?:\/\//i, '').split(/[/?#]/)[0];
+    else if (currentTab === 'tab-wifi') raw = 'wifi-' + $('wifi-ssid').value;
+    else if (currentTab === 'tab-vcard') raw = ($('vcard-first').value + '-' + $('vcard-last').value).trim();
+    else if (currentTab === 'tab-event') raw = $('event-title').value;
+    var slug = raw.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32);
+    return slug ? 'qr-' + slug : 'qr-code';
+  }
   function getData() {
     switch (currentTab) {
       case 'tab-url': return $('input-url').value.trim();
       case 'tab-text': return $('input-text').value;
       case 'tab-wifi': {
-        var s=$('wifi-ssid').value, p=$('wifi-password').value, e=$('wifi-encryption').value;
+        var s=escapeWifi($('wifi-ssid').value), p=escapeWifi($('wifi-password').value), e=$('wifi-encryption').value;
         var h=$('wifi-hidden').checked?'H:true;':'';
         return 'WIFI:T:'+e+';S:'+s+';P:'+p+';'+h+';';
       }
@@ -1209,12 +1234,12 @@
   downloadPng.addEventListener('click', function(){
     var sz = parseInt(qrSize.value,10)||300;
     var opts = buildQROptions(sz);
-    if(opts) new QRCodeStyling(opts).download({name:'qr-code',extension:'png'});
+    if(opts) { new QRCodeStyling(opts).download({name:getDownloadName(),extension:'png'}); showToast('Downloaded PNG'); }
   });
   downloadSvg.addEventListener('click', function(){
     var sz = parseInt(qrSize.value,10)||300;
     var opts = buildQROptions(sz);
-    if(opts) new QRCodeStyling(opts).download({name:'qr-code',extension:'svg'});
+    if(opts) { new QRCodeStyling(opts).download({name:getDownloadName(),extension:'svg'}); showToast('Downloaded SVG'); }
   });
   if (!navigator.clipboard || !window.ClipboardItem) {
     copyImg.style.display = 'none';
@@ -1227,6 +1252,7 @@
         return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
       }).then(function(){
         copyImg.textContent = 'Copied!'; copyImg.classList.add('copied');
+        showToast('QR image copied to clipboard');
         setTimeout(function(){ copyImg.textContent = '📋 Copy Image'; copyImg.classList.remove('copied'); }, 1500);
       }).catch(function(){
         copyImg.textContent = 'Failed';
@@ -1242,6 +1268,7 @@
     var u = outputUrl.value; if(!u) return;
     navigator.clipboard.writeText(u).then(function(){
       copyBtn.textContent='Copied!'; copyBtn.classList.add('copied');
+      showToast('Payload copied to clipboard');
       setTimeout(function(){ copyBtn.textContent='Copy'; copyBtn.classList.remove('copied'); },1500);
     });
   });
@@ -1402,6 +1429,7 @@
   $('share-btn').addEventListener('click', function(){
     navigator.clipboard.writeText(window.location.href).then(function(){
       $('share-btn').textContent = '✅ Copied';
+      showToast('Shareable wizard link copied');
       setTimeout(function(){ $('share-btn').textContent = '🔗 Share'; }, 1500);
     });
   });
