@@ -315,11 +315,136 @@
     margin-bottom: 0.75rem;
   }
 
+  /* --- Tooltip --- */
+  .label-with-tip {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+  .label-with-tip label { margin: 0; }
+  .tip-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+  .tip-btn {
+    width: 17px; height: 17px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    cursor: help;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+  }
+  .tip-btn:hover, .tip-btn:focus {
+    border-color: var(--accent);
+    color: var(--text);
+    outline: none;
+  }
+  .tip-bubble {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    width: 270px;
+    padding: 0.65rem 0.8rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    color: var(--text);
+    font-size: 0.75rem;
+    line-height: 1.45;
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+  }
+  .tip-wrap:hover .tip-bubble,
+  .tip-wrap:focus-within .tip-bubble {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* --- Guide & Footer --- */
+  .guide-card {
+    max-width: 1160px;
+    margin: 1.75rem auto 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .guide-card h3 { margin-top: 0; }
+  .guide-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 0.75rem;
+  }
+  .guide-item {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.85rem 1rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+  .guide-item strong {
+    display: block;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+    font-size: 0.83rem;
+  }
+  .footer {
+    max-width: 1160px;
+    margin: 1.5rem auto 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .footer-links { display: flex; gap: 0.75rem; align-items: center; }
+  .footer a {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .kofi-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.38rem 0.75rem;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    font-weight: 600;
+  }
+  .kofi-link:hover { border-bottom-color: rgba(99, 102, 241, 0.3); background: var(--accent); color: #fff !important; }
+
   @media (max-width: 860px) {
     body { padding: 1rem; }
     .layout { grid-template-columns: 1fr; }
     .preview-panel { position: static; }
     .download-row { grid-template-columns: 1fr; }
+    .guide-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -461,11 +586,11 @@
       <div>
         <label>Foreground</label>
         <div class="color-field">
-          <input type="color" id="fg-picker" value="#000000">
-          <input type="text" id="fg-hex" value="000000FF" maxlength="8">
+          <input type="color" id="fg-picker" value="#000000" autocomplete="off">
+          <input type="text" id="fg-hex" value="000000FF" maxlength="8" autocomplete="off">
         </div>
         <div class="opacity-row">
-          <input type="range" id="fg-opacity" min="0" max="255" value="255">
+          <input type="range" id="fg-opacity" min="0" max="255" value="255" autocomplete="off">
           <span id="fg-opacity-val">FF</span>
         </div>
       </div>
@@ -473,16 +598,16 @@
         <label>Background</label>
         <div id="bg-color-controls">
           <div class="color-field">
-            <input type="color" id="bg-picker" value="#ffffff">
-            <input type="text" id="bg-hex" value="FFFFFFFF" maxlength="8">
+            <input type="color" id="bg-picker" value="#ffffff" autocomplete="off">
+            <input type="text" id="bg-hex" value="FFFFFFFF" maxlength="8" autocomplete="off">
           </div>
           <div class="opacity-row">
-            <input type="range" id="bg-opacity" min="0" max="255" value="255">
+            <input type="range" id="bg-opacity" min="0" max="255" value="255" autocomplete="off">
             <span id="bg-opacity-val">FF</span>
           </div>
         </div>
         <div class="checkbox-row">
-          <input type="checkbox" id="bg-transparent">
+          <input type="checkbox" id="bg-transparent" autocomplete="off">
           <label for="bg-transparent">Transparent background</label>
         </div>
       </div>
@@ -542,7 +667,18 @@
       </div>
     </div>
 
-    <label for="ecl">Error Correction</label>
+    <div class="label-with-tip">
+      <label for="ecl">Error Correction</label>
+      <span class="tip-wrap">
+        <button type="button" class="tip-btn" aria-label="What is error correction?">?</button>
+        <span class="tip-bubble" role="tooltip">
+          <strong>What is Error Correction?</strong><br>
+          QR codes add backup data so they still scan if scratched, smudged, or partially covered.<br><br>
+          • <strong>Low / Medium:</strong> Cleaner, simpler dots for normal links.<br>
+          • <strong>Quartile / High:</strong> Denser pattern that survives damage or a center logo.
+        </span>
+      </span>
+    </div>
     <select id="ecl">
       <option value="L">Low (L) — 7%</option>
       <option value="M" selected>Medium (M) — 15%</option>
@@ -590,18 +726,47 @@
   </div>
 </div>
 
+<!-- Helpful Guide -->
+<section class="guide-card" aria-label="How QR Codes Work">
+  <h3>How QR Codes Work</h3>
+  <div class="guide-grid">
+    <div class="guide-item">
+      <strong>1. It’s just printed text</strong>
+      A QR code doesn’t store a live file or connect to a server on its own — it simply turns text (like a web address, WiFi password, or contact card) into a scannable pattern.
+    </div>
+    <div class="guide-item">
+      <strong>2. Changing a link later</strong>
+      Because the pattern is permanent once printed, use a <strong>URL forwarder</strong> if the destination might change — ideally a redirect on a domain you own.
+    </div>
+    <div class="guide-item">
+      <strong>3. Scanning tips</strong>
+      Keep strong contrast (dark dots on a light background), leave a quiet margin around the edges, and always test-scan with your phone before printing.
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <span>Made to keep QR codes simple, private, and free of tracking.</span>
+  <div class="footer-links">
+    <a href="https://github.com/jarbochov/qr-wizard" target="_blank" rel="noopener noreferrer">GitHub</a>
+    <a class="kofi-link" href="https://ko-fi.com/jarbochov" target="_blank" rel="noopener noreferrer">☕ Support on Ko-fi</a>
+  </div>
+</footer>
+
 <script src="https://unpkg.com/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"></script>
 <script>
 (function () {
   // ==============================
   // Helpers
   // ==============================
-  function hex8ToRgba(h) {
+  function hex8ToColor(h) {
     var clean = (h || '').replace(/[^0-9a-fA-F]/g, '');
-    if (clean.length < 6) return 'rgba(0,0,0,1)';
-    h = clean.substring(0, 8).padEnd(8, 'F');
+    if (clean.length < 6) return '#000000';
+    h = clean.substring(0, 8).padEnd(8, 'F').toUpperCase();
+    var aByte = parseInt(h.substring(6, 8), 16);
+    if (aByte === 255) return '#' + h.substring(0, 6);
     var r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16);
-    var b = parseInt(h.substring(4,6),16), a = parseInt(h.substring(6,8),16)/255;
+    var b = parseInt(h.substring(4,6),16), a = aByte / 255;
     return 'rgba('+r+','+g+','+b+','+a.toFixed(3)+')';
   }
   function alphaToHex(v) { return Math.round(v).toString(16).toUpperCase().padStart(2,'0'); }
@@ -787,10 +952,10 @@
   function buildQROptions(previewSize) {
     var data = getData();
     if (!data) return null;
-    var fg = hex8ToRgba(fgHex.value);
-    var bg = bgTransparent.checked ? 'rgba(0,0,0,0)' : hex8ToRgba(bgHex.value);
+    var fg = hex8ToColor(fgHex.value);
+    var bg = bgTransparent.checked ? 'rgba(0,0,0,0)' : hex8ToColor(bgHex.value);
     var logo = getPreviewLogo();
-    var cf = cornerEnable.checked ? hex8ToRgba(cornerHex.value) : fg;
+    var cf = cornerEnable.checked ? hex8ToColor(cornerHex.value) : fg;
     var eclVal = logo ? 'H' : ecl.value;
     var isLocal = logo && (logo.startsWith('data:') || logo.startsWith('file:'));
 
@@ -981,8 +1146,13 @@
     if(s.bg) {
       if (s.bg === '00000000' && s.bgTransparent === undefined) {
         bgTransparent.checked = true;
+        bgHex.value = 'FFFFFFFF'; bgPicker.value = '#ffffff'; bgOpacity.value = 255; bgOpacityVal.textContent = 'FF';
       } else {
-        bgHex.value=s.bg; bgPicker.value='#'+s.bg.substring(0,6); bgOpacity.value=parseInt(s.bg.substring(6,8),16); bgOpacityVal.textContent=s.bg.substring(6,8);
+        var bgClean = s.bg.replace(/[^0-9a-fA-F]/g, '').padEnd(8, 'F').toUpperCase();
+        bgHex.value = bgClean;
+        bgPicker.value = '#' + bgClean.substring(0, 6);
+        bgOpacity.value = parseInt(bgClean.substring(6, 8), 16);
+        bgOpacityVal.textContent = bgClean.substring(6, 8);
       }
     }
     if(s.bgTransparent!==undefined) bgTransparent.checked = s.bgTransparent;
@@ -1074,8 +1244,22 @@
   // ==============================
   // Init
   // ==============================
+  function applyDefaultColors() {
+    fgPicker.value = '#000000'; fgHex.value = '000000FF'; fgOpacity.value = 255; fgOpacityVal.textContent = 'FF';
+    bgPicker.value = '#ffffff'; bgHex.value = 'FFFFFFFF'; bgOpacity.value = 255; bgOpacityVal.textContent = 'FF';
+    bgTransparent.checked = false;
+    syncBgTransparentUI();
+  }
+  applyDefaultColors();
   loadHash();
   updatePreview();
+  window.addEventListener('pageshow', function(e) {
+    if (e.persisted) {
+      applyDefaultColors();
+      loadHash();
+      updatePreview();
+    }
+  });
 })();
 </script>
 
