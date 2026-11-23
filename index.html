@@ -439,6 +439,116 @@
   }
   .kofi-link:hover { border-bottom-color: rgba(99, 102, 241, 0.3); background: var(--accent); color: #fff !important; }
 
+  /* --- Swatches & Preview Backdrop --- */
+  .swatch-row {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.85rem;
+  }
+  .swatch-label { font-size: 0.75rem; color: var(--text-muted); margin-right: 0.15rem; }
+  .swatch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text);
+    font-size: 0.74rem;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .swatch-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .swatch-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 1px solid rgba(128,128,128,0.4);
+    display: inline-block;
+  }
+
+  .preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-header h3 { margin: 0; padding: 0; border: none; }
+  .backdrop-toggle {
+    display: inline-flex;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+  }
+  .backdrop-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    padding: 0.2rem 0.48rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .backdrop-btn.active { background: var(--surface2); color: var(--text); font-weight: 600; }
+  .preview-area.bg-light { background: #ffffff !important; }
+  .preview-area.bg-dark { background: #0f172a !important; }
+
+  .file-upload-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+  }
+  .file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin: 0;
+    transition: border-color 0.15s;
+  }
+  .file-btn:hover { border-color: var(--accent); }
+  .file-name {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
   @media (max-width: 860px) {
     body { padding: 1rem; }
     .layout { grid-template-columns: 1fr; }
@@ -582,6 +692,14 @@
 
     <!-- ===== Colors ===== -->
     <h3>Colors</h3>
+    <div class="swatch-row" aria-label="Quick color themes">
+      <span class="swatch-label">Quick themes:</span>
+      <button type="button" class="swatch-btn" data-fg="000000FF" data-bg="FFFFFFFF"><span class="swatch-dot" style="background:#000"></span>Classic</button>
+      <button type="button" class="swatch-btn" data-fg="312E81FF" data-bg="EEF2FFFF"><span class="swatch-dot" style="background:#4f46e5"></span>Indigo</button>
+      <button type="button" class="swatch-btn" data-fg="064E3BFF" data-bg="ECFDF5FF"><span class="swatch-dot" style="background:#059669"></span>Emerald</button>
+      <button type="button" class="swatch-btn" data-fg="881337FF" data-bg="FFF1F2FF"><span class="swatch-dot" style="background:#e11d48"></span>Rose</button>
+      <button type="button" class="swatch-btn" data-fg="FFFFFFFF" data-bg="0F172AFF"><span class="swatch-dot" style="background:#0f172a"></span>Inverted</button>
+    </div>
     <div class="row">
       <div>
         <label>Foreground</label>
@@ -591,7 +709,7 @@
         </div>
         <div class="opacity-row">
           <input type="range" id="fg-opacity" min="0" max="255" value="255" autocomplete="off">
-          <span id="fg-opacity-val">FF</span>
+          <span id="fg-opacity-val">100%</span>
         </div>
       </div>
       <div>
@@ -603,7 +721,7 @@
           </div>
           <div class="opacity-row">
             <input type="range" id="bg-opacity" min="0" max="255" value="255" autocomplete="off">
-            <span id="bg-opacity-val">FF</span>
+            <span id="bg-opacity-val">100%</span>
           </div>
         </div>
         <div class="checkbox-row">
@@ -625,7 +743,7 @@
       </div>
       <div class="opacity-row">
         <input type="range" id="corner-opacity" min="0" max="255" value="255">
-        <span id="corner-opacity-val">FF</span>
+        <span id="corner-opacity-val">100%</span>
       </div>
     </div>
 
@@ -690,9 +808,11 @@
     <h3>Logo Overlay</h3>
     <label for="logo-url">Logo Image URL</label>
     <input type="url" id="logo-url" placeholder="https://example.com/logo.png">
-    <label for="logo-file">Or choose a local file</label>
-    <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem;">
-      <input type="file" id="logo-file" accept="image/*" style="font-size:0.82rem;flex:1;">
+    <label>Or choose a local image</label>
+    <div class="file-upload-row">
+      <label for="logo-file" class="file-btn">📁 Choose Image</label>
+      <input type="file" id="logo-file" accept="image/*" style="display:none;">
+      <span class="file-name" id="logo-file-name">No file selected</span>
       <button type="button" class="action-btn" id="logo-clear" style="display:none;">Clear</button>
     </div>
     <p class="hint">Logo forces error correction to High. Remote URLs may fail locally (CORS) — use a local file for PNG/SVG export.</p>
@@ -701,7 +821,14 @@
 
   <!-- ==================== RIGHT: Preview + URL ==================== -->
   <div class="panel preview-panel">
-    <h3>Preview</h3>
+    <div class="preview-header">
+      <h3>Preview</h3>
+      <div class="backdrop-toggle" role="group" aria-label="Preview backdrop">
+        <button type="button" class="backdrop-btn active" data-backdrop="checker">Grid</button>
+        <button type="button" class="backdrop-btn" data-backdrop="light">Light</button>
+        <button type="button" class="backdrop-btn" data-backdrop="dark">Dark</button>
+      </div>
+    </div>
     <div class="preview-area" id="preview-area"></div>
     <div class="preview-meta">
       <span id="payload-info">0 chars</span>
@@ -752,6 +879,7 @@
     <a class="kofi-link" href="https://ko-fi.com/jarbochov" target="_blank" rel="noopener noreferrer">☕ Support on Ko-fi</a>
   </div>
 </footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://unpkg.com/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"></script>
 <script>
@@ -770,6 +898,7 @@
     return 'rgba('+r+','+g+','+b+','+a.toFixed(3)+')';
   }
   function alphaToHex(v) { return Math.round(v).toString(16).toUpperCase().padStart(2,'0'); }
+  function alphaToPct(v) { return Math.round((v / 255) * 100) + '%'; }
   function toVCalDate(dt) { return dt ? dt.replace(/[-:]/g,'') + '00' : ''; }
 
   // Color field wiring: (picker, hexInput, opacitySlider, opacityLabel)
@@ -778,7 +907,11 @@
       var v = hexEl.value.replace(/[^0-9a-fA-F]/g,'').slice(0,8).toUpperCase();
       hexEl.value = v;
       if (v.length >= 6) picker.value = '#' + v.substring(0,6);
-      if (v.length === 8 && slider) { slider.value = parseInt(v.substring(6,8),16); label.textContent = v.substring(6,8); }
+      if (v.length === 8 && slider) {
+        var aVal = parseInt(v.substring(6,8), 16);
+        slider.value = aVal;
+        label.textContent = alphaToPct(aVal);
+      }
     }
     function syncToHex() {
       var rgb = picker.value.slice(1).toUpperCase();
@@ -787,7 +920,7 @@
       }
       var aa = slider ? alphaToHex(slider.value) : 'FF';
       hexEl.value = rgb + aa;
-      if (label) label.textContent = aa;
+      if (label && slider) label.textContent = alphaToPct(slider.value);
     }
     picker.addEventListener('input', function(){ syncToHex(); scheduleUpdate(); });
     hexEl.addEventListener('input', function(){ syncFromHex(); scheduleUpdate(); });
@@ -796,7 +929,7 @@
         var rgb = hexEl.value.replace(/[^0-9a-fA-F]/g,'').substring(0,6);
         var aa = alphaToHex(slider.value);
         hexEl.value = rgb + aa;
-        label.textContent = aa;
+        label.textContent = alphaToPct(slider.value);
         scheduleUpdate();
       });
     }
@@ -820,7 +953,37 @@
   var cornerPicker  = $('corner-picker'), cornerHex = $('corner-hex'), cornerOpacity = $('corner-opacity'), cornerOpacityVal = $('corner-opacity-val');
   var qrSize = $('qr-size'), qrMargin = $('qr-margin');
   var dotStyle = $('dot-style'), cornerSquare = $('corner-square-style'), cornerDot = $('corner-dot-style');
-  var ecl = $('ecl'), logoUrl = $('logo-url'), logoFile = $('logo-file'), logoClear = $('logo-clear');
+  var ecl = $('ecl'), logoUrl = $('logo-url'), logoFile = $('logo-file'), logoClear = $('logo-clear'), logoFileName = $('logo-file-name');
+  var toastEl = $('toast'), toastTimer = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2000);
+  }
+
+  // Quick color swatches
+  document.querySelectorAll('.swatch-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var fg = btn.dataset.fg, bg = btn.dataset.bg;
+      fgHex.value = fg; fgPicker.value = '#' + fg.substring(0, 6); fgOpacity.value = 255; fgOpacityVal.textContent = '100%';
+      bgHex.value = bg; bgPicker.value = '#' + bg.substring(0, 6); bgOpacity.value = 255; bgOpacityVal.textContent = '100%';
+      bgTransparent.checked = false;
+      syncBgTransparentUI();
+      scheduleUpdate();
+    });
+  });
+
+  // Preview backdrop toggle
+  document.querySelectorAll('.backdrop-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.backdrop-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      previewArea.classList.remove('bg-light', 'bg-dark');
+      if (btn.dataset.backdrop === 'light') previewArea.classList.add('bg-light');
+      if (btn.dataset.backdrop === 'dark') previewArea.classList.add('bg-dark');
+    });
+  });
 
   var currentTab = 'tab-url';
   var qrCode = null;
@@ -872,13 +1035,14 @@
   logoFile.addEventListener('change', function(e){
     var file = e.target.files[0];
     if (file) {
+      logoFileName.textContent = file.name;
       var reader = new FileReader();
       reader.onload = function(ev){ localLogoDataUrl = ev.target.result; logoUrl.value = ''; updateLogoClearBtn(); scheduleUpdate(); };
       reader.readAsDataURL(file);
-    } else { localLogoDataUrl = null; updateLogoClearBtn(); scheduleUpdate(); }
+    } else { localLogoDataUrl = null; logoFileName.textContent = 'No file selected'; updateLogoClearBtn(); scheduleUpdate(); }
   });
   logoUrl.addEventListener('input', function(){
-    if (logoUrl.value.trim()) { localLogoDataUrl = null; logoFile.value = ''; }
+    if (logoUrl.value.trim()) { localLogoDataUrl = null; logoFile.value = ''; logoFileName.textContent = 'No file selected'; }
     updateLogoClearBtn();
     scheduleUpdate();
   });
@@ -886,6 +1050,7 @@
     localLogoDataUrl = null;
     logoFile.value = '';
     logoUrl.value = '';
+    logoFileName.textContent = 'No file selected';
     updateLogoClearBtn();
     scheduleUpdate();
   });
@@ -1018,6 +1183,10 @@
       outputUrl.value = '';
       return;
     }
+    if (typeof QRCodeStyling === 'undefined') {
+      previewArea.innerHTML = '<span style="color:#f59e0b;font-size:0.85rem;text-align:center;">Unable to load QR generator library. Check your connection and reload.</span>';
+      return;
+    }
     previewArea.innerHTML = '';
     if (qrCode) { qrCode.update(opts); } else { qrCode = new QRCodeStyling(opts); }
     qrCode.append(previewArea);
@@ -1142,23 +1311,24 @@
     if(s['wifi-encryption']) $('wifi-encryption').value = s['wifi-encryption'];
     if(s['wifi-hidden']!==undefined) $('wifi-hidden').checked = s['wifi-hidden'];
     // Colors
-    if(s.fg) { fgHex.value=s.fg; fgPicker.value='#'+s.fg.substring(0,6); fgOpacity.value=parseInt(s.fg.substring(6,8),16); fgOpacityVal.textContent=s.fg.substring(6,8); }
+    if(s.fg) { fgHex.value=s.fg; fgPicker.value='#'+s.fg.substring(0,6); var fgA=parseInt(s.fg.substring(6,8),16); fgOpacity.value=fgA; fgOpacityVal.textContent=alphaToPct(fgA); }
     if(s.bg) {
       if (s.bg === '00000000' && s.bgTransparent === undefined) {
         bgTransparent.checked = true;
-        bgHex.value = 'FFFFFFFF'; bgPicker.value = '#ffffff'; bgOpacity.value = 255; bgOpacityVal.textContent = 'FF';
+        bgHex.value = 'FFFFFFFF'; bgPicker.value = '#ffffff'; bgOpacity.value = 255; bgOpacityVal.textContent = '100%';
       } else {
         var bgClean = s.bg.replace(/[^0-9a-fA-F]/g, '').padEnd(8, 'F').toUpperCase();
         bgHex.value = bgClean;
         bgPicker.value = '#' + bgClean.substring(0, 6);
-        bgOpacity.value = parseInt(bgClean.substring(6, 8), 16);
-        bgOpacityVal.textContent = bgClean.substring(6, 8);
+        var bgA = parseInt(bgClean.substring(6, 8), 16);
+        bgOpacity.value = bgA;
+        bgOpacityVal.textContent = alphaToPct(bgA);
       }
     }
     if(s.bgTransparent!==undefined) bgTransparent.checked = s.bgTransparent;
     syncBgTransparentUI();
     if(s.cornerEnable!==undefined) { cornerEnable.checked=s.cornerEnable; cornerSection.style.display=s.cornerEnable?'block':'none'; }
-    if(s.corner) { cornerHex.value=s.corner; cornerPicker.value='#'+s.corner.substring(0,6); cornerOpacity.value=parseInt(s.corner.substring(6,8),16); cornerOpacityVal.textContent=s.corner.substring(6,8); }
+    if(s.corner) { cornerHex.value=s.corner; cornerPicker.value='#'+s.corner.substring(0,6); var cA=parseInt(s.corner.substring(6,8),16); cornerOpacity.value=cA; cornerOpacityVal.textContent=alphaToPct(cA); }
     if(s.size) qrSize.value=s.size;
     if(s.margin) qrMargin.value=s.margin;
     if(s.dotStyle) dotStyle.value=s.dotStyle;
@@ -1245,8 +1415,8 @@
   // Init
   // ==============================
   function applyDefaultColors() {
-    fgPicker.value = '#000000'; fgHex.value = '000000FF'; fgOpacity.value = 255; fgOpacityVal.textContent = 'FF';
-    bgPicker.value = '#ffffff'; bgHex.value = 'FFFFFFFF'; bgOpacity.value = 255; bgOpacityVal.textContent = 'FF';
+    fgPicker.value = '#000000'; fgHex.value = '000000FF'; fgOpacity.value = 255; fgOpacityVal.textContent = '100%';
+    bgPicker.value = '#ffffff'; bgHex.value = 'FFFFFFFF'; bgOpacity.value = 255; bgOpacityVal.textContent = '100%';
     bgTransparent.checked = false;
     syncBgTransparentUI();
   }
