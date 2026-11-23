@@ -20,23 +20,6 @@
   #qr-container {
     display: inline-block;
   }
-
-  /* Entrance animations */
-  @keyframes qr-fade { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes qr-pulse {
-    0% { transform: scale(0.85); opacity: 0; }
-    60% { transform: scale(1.05); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  @keyframes qr-bounce {
-    0% { transform: translateY(40px); opacity: 0; }
-    50% { transform: translateY(-10px); opacity: 1; }
-    70% { transform: translateY(5px); }
-    100% { transform: translateY(0); opacity: 1; }
-  }
-  .anim-fade   { animation: qr-fade 0.6s ease-out both; }
-  .anim-pulse  { animation: qr-pulse 0.5s ease-out both; }
-  .anim-bounce { animation: qr-bounce 0.6s ease-out both; }
 </style>
 </head>
 <body>
@@ -64,7 +47,7 @@
   const data = params.get('data') || '';
 
   if (!data) {
-    document.getElementById('qr-container').textContent = 'No data parameter provided.';
+    window.location.replace('./wizard/');
     return;
   }
 
@@ -88,27 +71,7 @@
   const cornerSquareStyle = params.get('cornerSquareStyle') || 'square';
   const cornerDotStyle    = params.get('cornerDotStyle') || 'square';
 
-  // --- Border & Shadow ---
-  const borderW     = parseInt(params.get('borderW'), 10) || 0;
-  const borderColor = params.get('borderColor') ? hex8ToRgba(params.get('borderColor')) : fg;
-  const borderR     = parseInt(params.get('borderR'), 10) || 0;
-  const shadowSize  = parseInt(params.get('shadowSize'), 10) || 0;
-  const shadowColor = params.get('shadowColor') ? hex8ToRgba(params.get('shadowColor')) : 'rgba(0,0,0,0.4)';
-
-  // --- Animation ---
-  const anim = params.get('anim') || '';
-
-  // --- Custom CSS ---
-  const customCss = params.get('css') || '';
-
-  // --- Apply container styles ---
   const container = document.getElementById('qr-container');
-  if (borderW) container.style.border = borderW + 'px solid ' + borderColor;
-  if (borderR) container.style.borderRadius = borderR + 'px';
-  if (shadowSize) container.style.boxShadow = '0 0 ' + shadowSize + 'px ' + shadowColor;
-  if (borderR) container.style.overflow = 'hidden';
-  if (anim && anim !== 'none') container.classList.add('anim-' + anim);
-  if (customCss) container.style.cssText += ';' + customCss;
 
   // --- Build & render QR ---
   function renderQR(qrData) {

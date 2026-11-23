@@ -230,16 +230,24 @@
     opacity: 0.45;
     pointer-events: none;
   }
-
-  /* --- Collapsible sections --- */
-  details { margin-top: 1rem; }
-  details summary {
-    font-size: 0.92rem; font-weight: 600; cursor: pointer;
-    padding-bottom: 0.3rem; border-bottom: 1px solid var(--surface2);
-    list-style: none;
+  .warn-banner {
+    background: rgba(243, 156, 18, 0.14);
+    border-left: 3px solid #f39c12;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.78rem;
+    color: var(--text);
+    margin-bottom: 0.85rem;
+    display: none;
   }
-  details summary::before { content: '▸ '; }
-  details[open] summary::before { content: '▾ '; }
+  .preview-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.65rem;
+  }
 
   @media (max-width: 768px) { .layout { grid-template-columns: 1fr; } }
 </style>
@@ -250,6 +258,7 @@
 <div class="header">
   <h1>🔳 QR Code Wizard</h1>
   <div class="header-actions">
+    <button class="icon-btn" id="reset-btn" title="Reset to defaults">↺ Reset</button>
     <button class="icon-btn" id="theme-toggle" title="Toggle light/dark theme">🌓</button>
     <button class="icon-btn" id="share-btn" title="Copy shareable wizard link">🔗</button>
   </div>
@@ -421,7 +430,7 @@
     <h3>Size</h3>
     <div class="row">
       <div><label for="qr-size">Size (px)</label><input type="number" id="qr-size" value="300" min="100" max="2000" step="10"></div>
-      <div><label for="qr-margin">Margin (px)</label><input type="number" id="qr-margin" value="0" min="0" max="100"></div>
+      <div><label for="qr-margin">Quiet Zone / Margin (px)</label><input type="number" id="qr-margin" value="16" min="0" max="100"></div>
     </div>
 
     <!-- ===== Dot / Corner Styles ===== -->
@@ -474,57 +483,24 @@
     </div>
     <p class="hint">Logo forces error correction to High. Remote URLs may fail locally (CORS) — use a local file for PNG/SVG export.</p>
 
-    <!-- ===== Advanced Styling (collapsible) ===== -->
-    <details>
-      <summary>Advanced Styling</summary>
-
-      <label for="anim-select">Entrance Animation (Viewer URL)</label>
-      <select id="anim-select">
-        <option value="">None</option>
-        <option value="fade">Fade In</option>
-        <option value="pulse">Pulse</option>
-        <option value="bounce">Bounce</option>
-      </select>
-
-      <h3 style="margin-top:1rem">Border</h3>
-      <div class="row-3">
-        <div><label for="border-w">Width (px)</label><input type="number" id="border-w" value="0" min="0" max="50"></div>
-        <div><label for="border-r">Radius (px)</label><input type="number" id="border-r" value="0" min="0" max="200"></div>
-        <div>
-          <label>Color</label>
-          <div class="color-field">
-            <input type="color" id="border-picker" value="#000000">
-            <input type="text" id="border-hex" value="000000FF" maxlength="8">
-          </div>
-        </div>
-      </div>
-
-      <h3 style="margin-top:1rem">Shadow</h3>
-      <div class="row">
-        <div><label for="shadow-size">Blur (px)</label><input type="number" id="shadow-size" value="0" min="0" max="100"></div>
-        <div>
-          <label>Color</label>
-          <div class="color-field">
-            <input type="color" id="shadow-picker" value="#000000">
-            <input type="text" id="shadow-hex" value="00000066" maxlength="8">
-          </div>
-        </div>
-      </div>
-
-      <label for="custom-css">Custom CSS (applied to container)</label>
-      <textarea id="custom-css" placeholder="e.g. transform: rotate(5deg);" style="font-family:'SF Mono','Fira Code',monospace;font-size:0.78rem;"></textarea>
-    </details>
-
   </div>
 
   <!-- ==================== RIGHT: Preview + URL ==================== -->
   <div class="panel">
     <h3>Preview</h3>
     <div class="preview-area" id="preview-area"></div>
+    <div class="preview-meta">
+      <span id="payload-info">0 chars</span>
+      <span id="ecl-info">ECL: M</span>
+    </div>
+    <div class="warn-banner" id="contrast-warning">
+      <strong>Low contrast:</strong> Foreground and background colors are close in brightness. Test scanning before printing.
+    </div>
 
     <div class="download-row">
       <button class="action-btn download-btn" id="download-png" disabled>💾 PNG</button>
       <button class="action-btn download-btn" id="download-svg" disabled>💾 SVG</button>
+      <button class="action-btn download-btn" id="copy-img" disabled>📋 Copy Image</button>
     </div>
 
     <h3>QR Viewer URL</h3>
@@ -589,7 +565,8 @@
   var $ = function(id){ return document.getElementById(id); };
 
   var previewArea  = $('preview-area'),  outputUrl = $('output-url');
-  var copyBtn      = $('copy-btn'),      downloadPng = $('download-png'), downloadSvg = $('download-svg');
+  var copyBtn      = $('copy-btn'),      downloadPng = $('download-png'), downloadSvg = $('download-svg'), copyImg = $('copy-img');
+  var payloadInfo  = $('payload-info'),  eclInfo = $('ecl-info'), contrastWarning = $('contrast-warning');
   var tabBtns      = document.querySelectorAll('.tab-btn');
   var tabContents  = document.querySelectorAll('.tab-content');
 
@@ -601,10 +578,6 @@
   var qrSize = $('qr-size'), qrMargin = $('qr-margin');
   var dotStyle = $('dot-style'), cornerSquare = $('corner-square-style'), cornerDot = $('corner-dot-style');
   var ecl = $('ecl'), logoUrl = $('logo-url'), logoFile = $('logo-file'), logoClear = $('logo-clear');
-  var animSelect = $('anim-select');
-  var borderW = $('border-w'), borderR = $('border-r'), borderPicker = $('border-picker'), borderHex = $('border-hex');
-  var shadowSize = $('shadow-size'), shadowPicker = $('shadow-picker'), shadowHex = $('shadow-hex');
-  var customCss = $('custom-css');
 
   var currentTab = 'tab-url';
   var qrCode = null;
@@ -617,8 +590,6 @@
   wireColor(fgPicker, fgHex, fgOpacity, fgOpacityVal);
   wireColor(bgPicker, bgHex, bgOpacity, bgOpacityVal);
   wireColor(cornerPicker, cornerHex, cornerOpacity, cornerOpacityVal);
-  wireColor(borderPicker, borderHex, null, null);
-  wireColor(shadowPicker, shadowHex, null, null);
 
   // Background transparent toggle
   function syncBgTransparentUI() {
@@ -765,17 +736,6 @@
     if(logo) { p.set('logo',logo); }
     else if(eclVal!=='M') { p.set('ecl',eclVal); }
 
-    var an = animSelect.value; if(an) p.set('anim',an);
-
-    var bw = parseInt(borderW.value,10); if(bw>0) p.set('borderW',bw);
-    var br = parseInt(borderR.value,10); if(br>0) p.set('borderR',br);
-    var bh = borderHex.value.trim().toUpperCase(); if(bw>0 && bh!=='000000FF') p.set('borderColor',bh);
-
-    var ss = parseInt(shadowSize.value,10); if(ss>0) p.set('shadowSize',ss);
-    var sh = shadowHex.value.trim().toUpperCase(); if(ss>0 && sh!=='00000066') p.set('shadowColor',sh);
-
-    var cc = customCss.value.trim(); if(cc) p.set('css',cc);
-
     return base + '?' + p.toString();
   }
 
@@ -810,12 +770,42 @@
   }
 
   // ==============================
+  // Contrast check
+  // ==============================
+  function relativeLuminance(hex8) {
+    var clean = (hex8 || '').replace(/[^0-9a-fA-F]/g, '').padEnd(6, '0');
+    var vals = [0, 2, 4].map(function(i) {
+      var c = parseInt(clean.substring(i, i + 2), 16) / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * vals[0] + 0.7152 * vals[1] + 0.0722 * vals[2];
+  }
+  function contrastRatio(h1, h2) {
+    var l1 = relativeLuminance(h1), l2 = relativeLuminance(h2);
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+  }
+
+  // ==============================
   // Preview
   // ==============================
   function updatePreview() {
+    var data = getData();
     var opts = buildQROptions(280);
     downloadPng.disabled = !opts;
     downloadSvg.disabled = !opts;
+    copyImg.disabled = !opts;
+
+    var len = data ? data.length : 0;
+    payloadInfo.textContent = len + ' char' + (len === 1 ? '' : 's') + (len > 300 ? ' (dense — use a larger size)' : '');
+    eclInfo.textContent = 'ECL: ' + (getPreviewLogo() ? 'H (logo)' : ecl.value);
+
+    if (bgTransparent.checked) {
+      contrastWarning.style.display = 'none';
+    } else {
+      var ratio = contrastRatio(fgHex.value, bgHex.value);
+      contrastWarning.style.display = ratio < 3.0 ? 'block' : 'none';
+    }
+
     if (!opts) {
       previewArea.innerHTML = '<span style="color:#666">Enter content to preview</span>';
       outputUrl.value = '';
@@ -850,6 +840,24 @@
     var opts = buildQROptions(sz);
     if(opts) new QRCodeStyling(opts).download({name:'qr-code',extension:'svg'});
   });
+  if (!navigator.clipboard || !window.ClipboardItem) {
+    copyImg.style.display = 'none';
+  } else {
+    copyImg.addEventListener('click', function(){
+      var sz = parseInt(qrSize.value,10)||300;
+      var opts = buildQROptions(sz);
+      if (!opts) return;
+      new QRCodeStyling(opts).getRawData('png').then(function(blob){
+        return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      }).then(function(){
+        copyImg.textContent = 'Copied!'; copyImg.classList.add('copied');
+        setTimeout(function(){ copyImg.textContent = '📋 Copy Image'; copyImg.classList.remove('copied'); }, 1500);
+      }).catch(function(){
+        copyImg.textContent = 'Failed';
+        setTimeout(function(){ copyImg.textContent = '📋 Copy Image'; }, 1500);
+      });
+    });
+  }
 
   // ==============================
   // Copy URL
@@ -905,11 +913,7 @@
       cornerEnable: cornerEnable.checked, corner: cornerHex.value,
       size: qrSize.value, margin: qrMargin.value,
       dotStyle: dotStyle.value, cornerSquareStyle: cornerSquare.value, cornerDotStyle: cornerDot.value,
-      ecl: ecl.value, logo: logoUrl.value,
-      anim: animSelect.value,
-      borderW: borderW.value, borderR: borderR.value, borderColor: borderHex.value,
-      shadowSize: shadowSize.value, shadowColor: shadowHex.value,
-      css: customCss.value
+      ecl: ecl.value, logo: logoUrl.value
     };
   }
 
@@ -950,13 +954,6 @@
     if(s.cornerDotStyle) cornerDot.value=s.cornerDotStyle;
     if(s.ecl) ecl.value=s.ecl;
     if(s.logo!==undefined) { logoUrl.value=s.logo; updateLogoClearBtn(); }
-    if(s.anim!==undefined) animSelect.value=s.anim;
-    if(s.borderW!==undefined) borderW.value=s.borderW;
-    if(s.borderR!==undefined) borderR.value=s.borderR;
-    if(s.borderColor) { borderHex.value=s.borderColor; borderPicker.value='#'+s.borderColor.substring(0,6); }
-    if(s.shadowSize!==undefined) shadowSize.value=s.shadowSize;
-    if(s.shadowColor) { shadowHex.value=s.shadowColor; shadowPicker.value='#'+s.shadowColor.substring(0,6); }
-    if(s.css!==undefined) customCss.value=s.css;
   }
 
   function refreshPresetList() {
@@ -1025,6 +1022,11 @@
       $('share-btn').textContent = '✅';
       setTimeout(function(){ $('share-btn').textContent = '🔗'; }, 1500);
     });
+  });
+
+  $('reset-btn').addEventListener('click', function(){
+    history.replaceState(null, '', window.location.pathname);
+    window.location.reload();
   });
 
   // ==============================
